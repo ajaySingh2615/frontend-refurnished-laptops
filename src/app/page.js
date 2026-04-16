@@ -1,4 +1,8 @@
-import { laptops } from "@/lib/mock-data";
+"use client";
+
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import { laptops as mockLaptops } from "@/lib/mock-data";
 import { HeroBanner } from "@/components/home/hero-banner";
 import { FlashSale } from "@/components/home/flash-sale";
 import { ShopByBrand } from "@/components/home/shop-by-brand";
@@ -7,16 +11,71 @@ import { ShopByFilters } from "@/components/home/shop-by-filters";
 import { WhyChooseUs } from "@/components/home/why-choose-us";
 import { ShieldCheck, Truck, RefreshCw } from "lucide-react";
 
-const dealLaptops = laptops.filter((l) => l.discount >= 33);
-const curatedLaptops = laptops.slice(0, 8);
+function apiToMock(product) {
+  const v = product.variants?.[0];
+  const price = v ? Number(v.price) : 0;
+  const originalPrice = v?.compareAtPrice ? Number(v.compareAtPrice) : price;
+  const discount =
+    originalPrice > price
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : 0;
+
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    brand: product.brand || "",
+    image: product.images?.[0]?.url || "/placeholder.png",
+    price,
+    originalPrice,
+    discount,
+    specs: [product.processor, product.ram, product.storage]
+      .filter(Boolean)
+      .join(" · "),
+    tags: [product.isFeatured ? "Featured" : null, product.conditionGrade]
+      .filter(Boolean),
+    rating: 4.5,
+    reviews: 0,
+  };
+}
 
 export default function HomePage() {
+  const [featured, setFeatured] = useState(null);
+  const [deals, setDeals] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [featRes, dealRes] = await Promise.all([
+          apiFetch("/api/products?featured=true&limit=8"),
+          apiFetch("/api/products?sort=price_asc&limit=8"),
+        ]);
+
+        if (featRes.ok) {
+          const json = await featRes.json();
+          const items = (json.data?.items || []).map(apiToMock);
+          setFeatured(items.length > 0 ? items : null);
+        }
+
+        if (dealRes.ok) {
+          const json = await dealRes.json();
+          const items = (json.data?.items || []).map(apiToMock);
+          setDeals(items.length > 0 ? items : null);
+        }
+      } catch {
+        // fallback to mock
+      }
+    }
+    load();
+  }, []);
+
+  const dealLaptops = deals || mockLaptops.filter((l) => l.discount >= 33);
+  const curatedLaptops = featured || mockLaptops.slice(0, 8);
+
   return (
     <main>
-      {/* 1. Hero banner carousel */}
       <HeroBanner />
 
-      {/* 2. Trust strip */}
       <section className="border-b bg-card py-4">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 sm:flex-row sm:justify-between">
           <p className="font-[family-name:var(--font-dm-sans)] text-sm font-bold text-primary sm:text-base">
@@ -39,24 +98,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. Hot deals */}
       <FlashSale products={dealLaptops} />
 
-      {/* 4. Shop by brand */}
       <ShopByBrand />
 
-      {/* 5. Handpicked for you */}
       <div className="bg-muted/30">
-        <ProductRow heading="Handpicked For You" products={curatedLaptops} />
+        <ProductRow heading="Handpicked For You" products={curatedLaptops} viewAllHref="/shop?featured=true" />
       </div>
 
-      {/* 6. Find your laptop (merged processor + RAM + OS) */}
       <ShopByFilters />
 
-      {/* 7. Why choose us */}
       <WhyChooseUs />
 
-      {/* 8. Newsletter strip */}
       <section className="border-t bg-primary py-10 text-primary-foreground">
         <div className="mx-auto max-w-2xl px-4 text-center">
           <h2 className="font-[family-name:var(--font-dm-sans)] text-lg font-bold sm:text-xl">

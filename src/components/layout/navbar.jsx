@@ -36,8 +36,9 @@ import {
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "#", label: "Laptops", icon: Laptop },
-  { href: "#", label: "Accessories", icon: Cable },
+  { href: "/shop", label: "Shop", icon: ShoppingBag },
+  { href: "/shop?type=laptop", label: "Laptops", icon: Laptop },
+  { href: "/shop?type=accessory", label: "Accessories", icon: Cable },
   { href: "/about", label: "About" },
 ];
 

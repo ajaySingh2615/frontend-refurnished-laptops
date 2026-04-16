@@ -98,4 +98,26 @@ export async function apiFetch(path, options = {}) {
   return res;
 }
 
+export async function apiUpload(path, formData) {
+  const url = `${API_BASE_URL}${path}`;
+
+  const headers = {};
+  const accessToken = getAccessToken();
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+
+  let res = await fetch(url, { method: "POST", headers, body: formData });
+
+  if (res.status === 401 && getRefreshToken()) {
+    const refreshed = await attemptRefresh();
+    if (refreshed) {
+      headers["Authorization"] = `Bearer ${getAccessToken()}`;
+      res = await fetch(url, { method: "POST", headers, body: formData });
+    }
+  }
+
+  return res;
+}
+
 export { setTokens, clearTokens, getRefreshToken };
