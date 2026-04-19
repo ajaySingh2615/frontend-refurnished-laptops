@@ -1,26 +1,33 @@
+import Link from "next/link";
 import { brands } from "@/lib/mock-data";
 
 export function ShopByBrand() {
   return (
-    <section className="py-10">
-      <div className="mx-auto max-w-7xl px-4">
-        <h2 className="mb-6 font-[family-name:var(--font-dm-sans)] text-xl font-bold sm:text-2xl">
-          Explore Top Brands
-        </h2>
+    <section className="border-y border-border py-14 sm:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            Top brands
+          </p>
+          <h2 className="mt-1 font-[family-name:var(--font-dm-sans)] text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Shop by brand
+          </h2>
+        </div>
 
-        <div className="grid grid-cols-4 gap-3 sm:grid-cols-4 md:grid-cols-8 md:gap-4">
+        <div className="grid grid-cols-4 gap-3 md:grid-cols-8">
           {brands.map((brand) => (
-            <button
+            <Link
               key={brand.slug}
-              className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30"
+              href={`/shop?brand=${encodeURIComponent(brand.name)}`}
+              className="group flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card transition-colors hover:border-foreground/30 hover:bg-muted/40"
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-lg font-bold text-primary transition-transform group-hover:scale-110">
+              <span className="font-[family-name:var(--font-dm-sans)] text-xl font-semibold text-foreground/70 transition-colors group-hover:text-foreground">
                 {brand.name[0]}
-              </div>
-              <span className="text-xs font-medium text-foreground sm:text-sm">
+              </span>
+              <span className="text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                 {brand.name}
               </span>
-            </button>
+            </Link>
           ))}
         </div>
       </div>

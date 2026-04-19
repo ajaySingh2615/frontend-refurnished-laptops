@@ -1,9 +1,9 @@
 "use client";
 
 import { use, useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,11 +22,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { UnitFormDialog } from "@/components/admin/unit-form";
+import { AdminPageHeader } from "@/components/admin/page-header";
 
-const statusColors = {
-  available: "default",
+const statusVariants = {
+  available: "success",
   sold: "secondary",
   reserved: "outline",
   returned: "outline",
@@ -126,74 +127,87 @@ export default function AdminUnitsPage({ params }) {
     }
   }
 
-  if (loading) {
-    return <p className="text-muted-foreground">Loading units...</p>;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-[family-name:var(--font-dm-sans)] text-2xl font-bold">
-          Serial Units
-        </h1>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Unit
-        </Button>
-      </div>
+    <div className="space-y-7">
+      <Link
+        href="/admin/inventory"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to inventory
+      </Link>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <AdminPageHeader
+        eyebrow="Inventory"
+        title="Serial units"
+        description={`${units.length} ${units.length === 1 ? "unit" : "units"} tracked for this variant.`}
+        action={
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-1.5 h-4 w-4" /> Add unit
+          </Button>
+        }
+      />
+
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Serial number</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Grade</TableHead>
+              <TableHead>Notes</TableHead>
+              <TableHead>Sold at</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>Serial Number</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead>Sold At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
+                  Loading units...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {units.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No units tracked for this variant
+            ) : units.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center">
+                  <p className="text-sm font-medium text-foreground">No units tracked yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Add a unit to start tracking serial numbers for this variant.
+                  </p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              units.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell className="font-mono text-xs text-foreground">{u.serialNumber}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariants[u.status] || "outline"} className="capitalize">
+                      {u.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{u.conditionGrade}</TableCell>
+                  <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
+                    {u.conditionNotes || "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                    {u.soldAt ? new Date(u.soldAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon-sm" onClick={() => setEditing(u)} aria-label="Edit">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setDeleteTarget(u)} aria-label="Delete">
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                units.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-mono text-sm">{u.serialNumber}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusColors[u.status] || "outline"}>
-                        {u.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{u.conditionGrade}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-xs">
-                      {u.conditionNotes || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {u.soldAt ? new Date(u.soldAt).toLocaleDateString() : "—"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => setEditing(u)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(u)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </section>
 
       <UnitFormDialog
         open={showForm}
@@ -213,7 +227,7 @@ export default function AdminUnitsPage({ params }) {
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remove Unit</DialogTitle>
+            <DialogTitle>Remove unit</DialogTitle>
             <DialogDescription>
               Delete unit &quot;{deleteTarget?.serialNumber}&quot;?
               Only available units can be removed.
@@ -222,7 +236,7 @@ export default function AdminUnitsPage({ params }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Removing..." : "Remove"}
+              {deleting ? "Removing..." : "Remove unit"}
             </Button>
           </DialogFooter>
         </DialogContent>

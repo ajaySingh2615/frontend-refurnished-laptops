@@ -53,7 +53,7 @@ export function UnitFormDialog({ open, onClose, onSubmit, initial, saving }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Unit" : "Add Unit"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit unit" : "Add unit"}</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={(e) => {
@@ -68,17 +68,22 @@ export function UnitFormDialog({ open, onClose, onSubmit, initial, saving }) {
         >
           {!isEdit && (
             <div className="space-y-1.5">
-              <Label>Serial Number *</Label>
+              <Label className="text-xs font-medium text-foreground">
+                Serial number <span className="text-destructive">*</span>
+              </Label>
               <Input
                 value={form.serialNumber}
                 onChange={(e) => handleChange("serialNumber", e.target.value)}
                 required
+                className="font-mono"
               />
             </div>
           )}
           <div className="grid gap-4 grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Condition Grade *</Label>
+              <Label className="text-xs font-medium text-foreground">
+                Condition grade <span className="text-destructive">*</span>
+              </Label>
               <Select value={form.conditionGrade} onValueChange={(v) => handleChange("conditionGrade", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -89,13 +94,13 @@ export function UnitFormDialog({ open, onClose, onSubmit, initial, saving }) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label className="text-xs font-medium text-foreground">Status</Label>
               <Select value={form.status} onValueChange={(v) => handleChange("status", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    <SelectItem key={s} value={s} className="capitalize">
+                      {s}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -103,16 +108,19 @@ export function UnitFormDialog({ open, onClose, onSubmit, initial, saving }) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Condition Notes</Label>
+            <Label className="text-xs font-medium text-foreground">Notes</Label>
             <Textarea
               value={form.conditionNotes}
               onChange={(e) => handleChange("conditionNotes", e.target.value)}
               rows={2}
+              placeholder="Cosmetic notes, defects, accessories..."
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Add"}</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : isEdit ? "Update unit" : "Add unit"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

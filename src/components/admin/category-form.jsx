@@ -43,46 +43,50 @@ export function CategoryForm({ initial, parents, onSubmit, onCancel, saving }) {
       }}
       className="space-y-4"
     >
-      <div className="space-y-1.5">
-        <Label>Name</Label>
-        <Input
-          value={form.name}
-          onChange={(e) => handleChange("name", e.target.value)}
-          required
-        />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-foreground">
+            Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            value={form.name}
+            onChange={(e) => handleChange("name", e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-foreground">Parent category</Label>
+          <Select
+            value={form.parentId || "none"}
+            onValueChange={(v) => handleChange("parentId", v === "none" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="None (top-level)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None (top-level)</SelectItem>
+              {parents.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label>Parent Category</Label>
-        <Select
-          value={form.parentId || "none"}
-          onValueChange={(v) => handleChange("parentId", v === "none" ? "" : v)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="None (top-level)" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None (top-level)</SelectItem>
-            {parents.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>Description</Label>
+        <Label className="text-xs font-medium text-foreground">Description</Label>
         <Textarea
           value={form.description || ""}
           onChange={(e) => handleChange("description", e.target.value)}
-          rows={2}
+          rows={3}
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label>Image URL</Label>
+        <Label className="text-xs font-medium text-foreground">Image URL</Label>
         <Input
           value={form.imageUrl || ""}
           onChange={(e) => handleChange("imageUrl", e.target.value)}
@@ -90,9 +94,9 @@ export function CategoryForm({ initial, parents, onSubmit, onCancel, saving }) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <div className="space-y-1.5">
-          <Label>Sort Order</Label>
+          <Label className="text-xs font-medium text-foreground">Sort order</Label>
           <Input
             type="number"
             min={0}
@@ -100,24 +104,24 @@ export function CategoryForm({ initial, parents, onSubmit, onCancel, saving }) {
             onChange={(e) => handleChange("sortOrder", Number(e.target.value))}
           />
         </div>
-        <div className="flex items-center gap-2 pt-6">
+        <label className="flex items-center gap-2.5 self-end pb-2.5">
           <Switch
             checked={form.isActive}
             onCheckedChange={(v) => handleChange("isActive", v)}
           />
-          <Label>Active</Label>
-        </div>
+          <span className="text-sm font-medium text-foreground">Active</span>
+        </label>
       </div>
 
-      <div className="flex gap-2 pt-2">
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : initial?.id ? "Update" : "Create"}
-        </Button>
+      <div className="flex justify-end gap-2 border-t border-border pt-4">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
         )}
+        <Button type="submit" disabled={saving}>
+          {saving ? "Saving..." : initial?.id ? "Update category" : "Create category"}
+        </Button>
       </div>
     </form>
   );

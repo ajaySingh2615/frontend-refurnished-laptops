@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -46,6 +47,9 @@ export function StockAdjustDialog({ variant, open, onClose, onDone }) {
       const json = await res.json();
       if (res.ok) {
         toast.success(`Stock adjusted: ${json.data?.previousStock} → ${json.data?.newStock}`);
+        setQuantity("");
+        setReason("");
+        setNotes("");
         onDone();
         onClose();
       } else {
@@ -62,43 +66,59 @@ export function StockAdjustDialog({ variant, open, onClose, onDone }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adjust Stock — {variant?.variantName}</DialogTitle>
+          <DialogTitle>Adjust stock</DialogTitle>
+          <DialogDescription>
+            {variant?.variantName} · current stock{" "}
+            <span className="font-mono font-medium text-foreground">
+              {variant?.stock}
+            </span>
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Current Stock</Label>
-            <p className="text-lg font-bold">{variant?.stock}</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Quantity Change (+ or -)</Label>
+            <Label className="text-xs font-medium text-foreground">
+              Quantity change
+            </Label>
             <Input
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="e.g. 10 or -5"
+              placeholder="Use + to add, - to remove"
               required
             />
+            <p className="text-[11px] text-muted-foreground">
+              Example: 10 to add ten units, -5 to remove five.
+            </p>
           </div>
           <div className="space-y-1.5">
-            <Label>Reason</Label>
+            <Label className="text-xs font-medium text-foreground">Reason</Label>
             <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger>
               <SelectContent>
                 {REASONS.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                  <SelectItem key={r} value={r} className="capitalize">
+                    {r}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Notes (optional)</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+            <Label className="text-xs font-medium text-foreground">
+              Notes (optional)
+            </Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              placeholder="Any additional context"
+            />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Adjust"}</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Adjust stock"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

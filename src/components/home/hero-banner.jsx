@@ -1,79 +1,82 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { heroBanners } from "@/lib/mock-data";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 
 export function HeroBanner() {
-  const [current, setCurrent] = useState(0);
-
-  const next = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % heroBanners.length);
-  }, []);
-
-  const prev = useCallback(() => {
-    setCurrent((prev) => (prev - 1 + heroBanners.length) % heroBanners.length);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(next, 5000);
-    return () => clearInterval(timer);
-  }, [next]);
-
-  const banner = heroBanners[current];
-
   return (
-    <section className="relative overflow-hidden">
-      <div
-        className={`relative flex items-center justify-center bg-gradient-to-r ${banner.gradient} text-white transition-all duration-700`}
-        style={{ minHeight: "380px" }}
-      >
-        <div className="absolute inset-0 bg-black/10" />
+    <section className="relative overflow-hidden border-b border-border bg-background">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-24">
+        <div className="flex flex-col justify-center">
+          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5 text-foreground" />
+            Certified refurbished · 6-month warranty
+          </span>
 
-        <div className="relative z-10 mx-auto max-w-3xl px-6 py-16 text-center">
-          <h1 className="font-[family-name:var(--font-dm-sans)] text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            {banner.title}
+          <h1 className="mt-5 text-balance font-[family-name:var(--font-dm-sans)] text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Premium laptops,
+            <br />
+            <span className="text-muted-foreground">at a fraction of the price.</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-white/90 sm:text-lg">
-            {banner.subtitle}
+
+          <p className="mt-5 max-w-md text-balance text-base leading-relaxed text-muted-foreground">
+            Hand-picked, tested and certified refurbished laptops from Dell, HP, Lenovo,
+            Apple and more. Save up to 60% with confidence.
           </p>
-          <Button
-            size="lg"
-            className="mt-6 bg-white text-foreground hover:bg-white/90 font-semibold px-8"
-          >
-            {banner.cta}
-          </Button>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href="/shop">
+              <Button size="lg" className="gap-2">
+                Browse laptops
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/shop?type=accessory">
+              <Button size="lg" variant="outline">
+                Shop accessories
+              </Button>
+            </Link>
+          </div>
+
+          <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-border pt-6">
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                Customers
+              </dt>
+              <dd className="mt-1 font-[family-name:var(--font-dm-sans)] text-xl font-semibold text-foreground">
+                12k+
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                Models
+              </dt>
+              <dd className="mt-1 font-[family-name:var(--font-dm-sans)] text-xl font-semibold text-foreground">
+                200+
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                Avg. rating
+              </dt>
+              <dd className="mt-1 font-[family-name:var(--font-dm-sans)] text-xl font-semibold text-foreground">
+                4.7
+              </dd>
+            </div>
+          </dl>
         </div>
 
-        <button
-          onClick={prev}
-          aria-label="Previous banner"
-          className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm hover:bg-white/30 transition"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          onClick={next}
-          aria-label="Next banner"
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm hover:bg-white/30 transition"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {heroBanners.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            aria-label={`Go to banner ${i + 1}`}
-            className={`h-2 rounded-full transition-all ${
-              i === current ? "w-6 bg-white" : "w-2 bg-white/50"
-            }`}
-          />
-        ))}
+        <div className="relative hidden items-center justify-center lg:flex">
+          <div className="absolute inset-x-8 top-12 bottom-0 rounded-3xl bg-muted/40" />
+          <div className="relative aspect-[5/4] w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+            <img
+              src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1000&h=800&fit=crop"
+              alt="Premium refurbished laptop"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
       </div>
     </section>
   );

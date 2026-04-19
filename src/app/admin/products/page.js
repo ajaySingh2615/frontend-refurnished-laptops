@@ -4,10 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -25,6 +24,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { cn } from "@/lib/utils";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -82,21 +83,24 @@ export default function AdminProductsPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-[family-name:var(--font-dm-sans)] text-2xl font-bold">
-          Products
-        </h1>
-        <Button asChild>
-          <Link href="/admin/products/new">
-            <Plus className="mr-2 h-4 w-4" /> Add Product
+    <div className="space-y-7">
+      <AdminPageHeader
+        eyebrow="Catalog"
+        title="Products"
+        description={`${total} ${total === 1 ? "product" : "products"} in your catalog`}
+        action={
+          <Link
+            href="/admin/products/new"
+            className={cn(buttonVariants({ variant: "default" }))}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Add product
           </Link>
-        </Button>
-      </div>
+        }
+      />
 
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search products..."
             value={search}
@@ -104,86 +108,105 @@ export default function AdminProductsPage() {
             className="pl-9"
           />
         </div>
+        <p className="text-xs text-muted-foreground">
+          Page {page} of {Math.max(totalPages, 1)}
+        </p>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Brand</TableHead>
+              <TableHead className="text-center">Variants</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Brand</TableHead>
-                <TableHead className="text-center">Variants</TableHead>
-                <TableHead className="text-center">Published</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
+                  Loading products...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Loading...
+            ) : products.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center">
+                  <p className="text-sm font-medium text-foreground">No products found</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {search
+                      ? "Try adjusting your search."
+                      : "Add your first product to get started."}
+                  </p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              products.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {p.images?.[0]?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.images[0].url}
+                          alt={p.name}
+                          className="h-10 w-10 rounded-md border border-border object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-md border border-border bg-muted" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {p.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          /{p.slug}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize">{p.type}</Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {p.brand || "—"}
+                  </TableCell>
+                  <TableCell className="text-center text-sm tabular-nums">
+                    {p.variants?.length || 0}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={p.isPublished ? "success" : "secondary"}>
+                      {p.isPublished ? "Published" : "Draft"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Link
+                        href={`/admin/products/${p.id}/edit`}
+                        className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
+                        aria-label="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setDeleteTarget(p)}
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No products found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                products.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {p.images?.[0]?.url ? (
-                          <img
-                            src={p.images[0].url}
-                            alt={p.name}
-                            className="h-10 w-10 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded bg-muted" />
-                        )}
-                        <span className="font-medium">{p.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{p.type}</Badge>
-                    </TableCell>
-                    <TableCell>{p.brand || "—"}</TableCell>
-                    <TableCell className="text-center">
-                      {p.variants?.length || 0}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={p.isPublished ? "default" : "secondary"}>
-                        {p.isPublished ? "Yes" : "Draft"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link href={`/admin/products/${p.id}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteTarget(p)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </section>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
@@ -195,7 +218,7 @@ export default function AdminProductsPage() {
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="px-2 text-xs text-muted-foreground tabular-nums">
             Page {page} of {totalPages}
           </span>
           <Button
@@ -212,7 +235,7 @@ export default function AdminProductsPage() {
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>Delete product</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
               All variants and images will be removed.
@@ -223,7 +246,7 @@ export default function AdminProductsPage() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Deleting..." : "Delete product"}
             </Button>
           </DialogFooter>
         </DialogContent>

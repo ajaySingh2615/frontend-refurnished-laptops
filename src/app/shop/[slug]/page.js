@@ -3,10 +3,9 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, ChevronRight, ShieldCheck, Truck, RefreshCw } from "lucide-react";
 import { ProductGallery } from "@/components/shop/product-gallery";
 import { VariantSelector } from "@/components/shop/variant-selector";
 
@@ -46,7 +45,7 @@ export default function ProductDetailPage({ params }) {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
@@ -54,10 +53,10 @@ export default function ProductDetailPage({ params }) {
   if (!product) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Product not found.</p>
-        <Button asChild variant="outline">
-          <Link href="/shop">Back to Shop</Link>
-        </Button>
+        <p className="text-sm text-muted-foreground">Product not found.</p>
+        <Link href="/shop">
+          <Button variant="outline">Back to shop</Button>
+        </Link>
       </div>
     );
   }
@@ -79,111 +78,133 @@ export default function ProductDetailPage({ params }) {
     { label: "Storage", value: product.storage },
     { label: "Display", value: product.display },
     { label: "GPU", value: product.gpu },
-    { label: "Operating System", value: product.os },
+    { label: "Operating system", value: product.os },
     { label: "Condition", value: product.conditionGrade },
-    { label: "Warranty", value: product.warrantyMonths ? `${product.warrantyMonths} months` : null },
+    {
+      label: "Warranty",
+      value: product.warrantyMonths ? `${product.warrantyMonths} months` : null,
+    },
   ].filter((s) => s.value);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">Home</Link>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <nav className="mb-8 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">
+          Home
+        </Link>
         <ChevronRight className="h-3 w-3" />
-        <Link href="/shop" className="hover:text-foreground">Shop</Link>
+        <Link href="/shop" className="hover:text-foreground">
+          Shop
+        </Link>
         <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground">{product.name}</span>
+        <span className="text-foreground truncate max-w-xs">{product.name}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Gallery */}
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         <ProductGallery images={product.images} />
 
-        {/* Info */}
-        <div className="space-y-5">
-          {product.brand && (
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              {product.brand}
-            </p>
-          )}
-
-          <h1 className="font-[family-name:var(--font-dm-sans)] text-2xl font-bold sm:text-3xl">
-            {product.name}
-          </h1>
-
-          <div className="flex items-baseline gap-3">
-            <span className="font-[family-name:var(--font-dm-sans)] text-3xl font-bold text-primary">
-              {formatPrice(price)}
-            </span>
-            {compareAt && compareAt > price && (
-              <>
-                <span className="text-lg text-muted-foreground line-through">
-                  {formatPrice(compareAt)}
-                </span>
-                <Badge variant="destructive">{discount}% OFF</Badge>
-              </>
+        <div>
+          <div className="space-y-4">
+            {product.brand && (
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {product.brand}
+              </p>
             )}
-          </div>
 
-          {/* Stock status */}
-          <div>
-            {stock > 0 ? (
-              stock <= lowThreshold ? (
-                <Badge variant="outline" className="text-orange-600 border-orange-300">
-                  Only {stock} left in stock
-                </Badge>
+            <h1 className="font-[family-name:var(--font-dm-sans)] text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
+              {product.name}
+            </h1>
+
+            <div className="flex flex-wrap items-baseline gap-3 pt-2">
+              <span className="font-[family-name:var(--font-dm-sans)] text-3xl font-semibold tracking-tight text-foreground">
+                {formatPrice(price)}
+              </span>
+              {compareAt && compareAt > price && (
+                <>
+                  <span className="text-base text-muted-foreground line-through">
+                    {formatPrice(compareAt)}
+                  </span>
+                  <Badge variant="success">{discount}% off</Badge>
+                </>
+              )}
+            </div>
+
+            <div>
+              {stock > 0 ? (
+                stock <= lowThreshold ? (
+                  <Badge variant="warning">Only {stock} left in stock</Badge>
+                ) : (
+                  <Badge variant="success">In stock</Badge>
+                )
               ) : (
-                <Badge variant="outline" className="text-green-600 border-green-300">
-                  In Stock
-                </Badge>
-              )
-            ) : (
-              <Badge variant="destructive">Out of Stock</Badge>
-            )}
+                <Badge variant="destructive">Out of stock</Badge>
+              )}
+            </div>
           </div>
 
-          {/* Variant selector */}
-          <VariantSelector
-            variants={product.variants}
-            selected={selectedVariant}
-            onSelect={setSelectedVariant}
-          />
+          <div className="mt-7">
+            <VariantSelector
+              variants={product.variants}
+              selected={selectedVariant}
+              onSelect={setSelectedVariant}
+            />
+          </div>
 
-          <Button size="lg" className="w-full sm:w-auto" disabled={stock === 0}>
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {stock === 0 ? "Out of Stock" : "Add to Cart"}
-          </Button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button size="xl" className="flex-1" disabled={stock === 0}>
+              <ShoppingCart className="h-4 w-4" />
+              {stock === 0 ? "Out of stock" : "Add to cart"}
+            </Button>
+            <Button size="xl" variant="outline" className="flex-1" disabled={stock === 0}>
+              Buy it now
+            </Button>
+          </div>
+
+          <div className="mt-8 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border">
+            <Perk icon={ShieldCheck} label="Warranty" sub="6 months" />
+            <Perk icon={Truck} label="Free shipping" sub="Orders ₹5k+" />
+            <Perk icon={RefreshCw} label="Easy returns" sub="7 days" />
+          </div>
 
           {product.description && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="mb-2 font-semibold">Description</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-line">
-                  {product.description}
-                </p>
-              </div>
-            </>
+            <div className="mt-10 border-t border-border pt-7">
+              <h3 className="text-sm font-semibold text-foreground">Description</h3>
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                {product.description}
+              </p>
+            </div>
           )}
 
           {product.type === "laptop" && specs.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="mb-3 font-semibold">Specifications</h3>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                  {specs.map((s) => (
-                    <div key={s.label} className="flex justify-between border-b py-2 text-sm">
-                      <span className="text-muted-foreground">{s.label}</span>
-                      <span className="font-medium">{s.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
+            <div className="mt-10 border-t border-border pt-7">
+              <h3 className="text-sm font-semibold text-foreground">Specifications</h3>
+              <dl className="mt-4 divide-y divide-border rounded-lg border border-border">
+                {specs.map((s) => (
+                  <div
+                    key={s.label}
+                    className="grid grid-cols-3 gap-4 px-4 py-3 text-sm"
+                  >
+                    <dt className="text-muted-foreground">{s.label}</dt>
+                    <dd className="col-span-2 font-medium text-foreground">
+                      {s.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function Perk({ icon: Icon, label, sub }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-1 bg-card px-3 py-4 text-center">
+      <Icon className="h-4 w-4 text-foreground" strokeWidth={1.6} />
+      <p className="text-xs font-semibold text-foreground">{label}</p>
+      <p className="text-[11px] text-muted-foreground">{sub}</p>
     </div>
   );
 }

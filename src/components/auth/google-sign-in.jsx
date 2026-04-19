@@ -90,7 +90,7 @@ export function GoogleSignIn() {
         window.google.accounts.id.renderButton(containerRef.current, {
           theme: "outline",
           size: "large",
-          width: 360,
+          width: 320,
           text: "continue_with",
           shape: "rectangular",
         });
@@ -108,11 +108,11 @@ export function GoogleSignIn() {
 
   if (!clientId) {
     return (
-      <div className="rounded-lg border border-dashed border-muted-foreground/30 p-3 text-center text-sm text-muted-foreground">
+      <div className="rounded-md border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
         Google Sign-In not configured
       </div>
     );
   }
 
-  return <div ref={containerRef} className="flex justify-center" />;
+  return <div ref={containerRef} className="flex justify-center [&>div]:!w-full [&_iframe]:!w-full" />;
 }

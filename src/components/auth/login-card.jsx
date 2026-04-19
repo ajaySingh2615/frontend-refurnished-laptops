@@ -1,44 +1,45 @@
 "use client";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { GoogleSignIn } from "./google-sign-in";
 import { PhoneOtpForm } from "./phone-otp-form";
-import { Laptop } from "lucide-react";
 
 export function LoginCard() {
   return (
-    <Card className="w-full max-w-md shadow-lg">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Laptop className="h-6 w-6" />
-        </div>
-        <CardTitle className="font-[family-name:var(--font-dm-sans)] text-xl">
-          Welcome Back
-        </CardTitle>
-        <CardDescription className="text-sm">
-          Sign in to access your account and start shopping
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5 pt-2">
+    <div className="w-full max-w-sm">
+      <div className="text-left">
+        <h2 className="font-[family-name:var(--font-dm-sans)] text-2xl font-semibold tracking-tight text-foreground">
+          Welcome back
+        </h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Sign in to continue to your account.
+        </p>
+      </div>
+
+      <div className="mt-8">
         <GoogleSignIn />
+      </div>
 
-        <div className="flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-            or continue with phone
-          </span>
-          <Separator className="flex-1" />
-        </div>
+      <div className="my-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          or with phone
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
-        <PhoneOtpForm />
-      </CardContent>
-    </Card>
+      <PhoneOtpForm />
+
+      <p className="mt-8 text-center text-xs text-muted-foreground">
+        By continuing you agree to our{" "}
+        <a href="#" className="underline underline-offset-2 hover:text-foreground">
+          Terms
+        </a>{" "}
+        and{" "}
+        <a href="#" className="underline underline-offset-2 hover:text-foreground">
+          Privacy Policy
+        </a>
+        .
+      </p>
+    </div>
   );
 }

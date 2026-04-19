@@ -3,21 +3,39 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminPageHeader } from "@/components/admin/page-header";
 
-const FIELDS = [
-  { key: "shopName", label: "Shop Name", type: "text" },
-  { key: "gstin", label: "GSTIN", type: "text", placeholder: "22AAAAA0000A1Z5" },
-  { key: "pan", label: "PAN", type: "text", placeholder: "AAAAA0000A" },
-  { key: "address", label: "Address", type: "textarea" },
-  { key: "state", label: "State", type: "text" },
-  { key: "phone", label: "Phone", type: "text" },
-  { key: "email", label: "Email", type: "email" },
-  { key: "invoicePrefix", label: "Invoice Prefix", type: "text", placeholder: "INV-" },
+const SECTIONS = [
+  {
+    title: "Business identity",
+    description: "How your shop appears on invoices and public pages.",
+    fields: [
+      { key: "shopName", label: "Shop name", type: "text" },
+      { key: "invoicePrefix", label: "Invoice prefix", type: "text", placeholder: "INV-" },
+    ],
+  },
+  {
+    title: "Tax details",
+    description: "Statutory information for tax compliance.",
+    fields: [
+      { key: "gstin", label: "GSTIN", type: "text", placeholder: "22AAAAA0000A1Z5" },
+      { key: "pan", label: "PAN", type: "text", placeholder: "AAAAA0000A" },
+    ],
+  },
+  {
+    title: "Address & contact",
+    description: "Used in invoices, communication and shipping origin.",
+    fields: [
+      { key: "address", label: "Address", type: "textarea", colSpan: 2 },
+      { key: "state", label: "State", type: "text" },
+      { key: "phone", label: "Phone", type: "text" },
+      { key: "email", label: "Email", type: "email", colSpan: 2 },
+    ],
+  },
 ];
 
 export default function AdminSettingsPage() {
@@ -68,51 +86,70 @@ export default function AdminSettingsPage() {
     }
   }
 
-  if (loading) {
-    return <p className="text-muted-foreground">Loading settings...</p>;
-  }
-
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="font-[family-name:var(--font-dm-sans)] text-2xl font-bold">
-        Shop &amp; Legal Settings
-      </h1>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <AdminPageHeader
+        eyebrow="Settings"
+        title="Shop & legal settings"
+        description="Manage your store identity and tax details. These are used in invoices and on public pages."
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Business Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {FIELDS.map((f) => (
-              <div key={f.key} className="space-y-1.5">
-                <Label htmlFor={f.key}>{f.label}</Label>
-                {f.type === "textarea" ? (
-                  <Textarea
-                    id={f.key}
-                    value={form[f.key] || ""}
-                    onChange={(e) => handleChange(f.key, e.target.value)}
-                    placeholder={f.placeholder || ""}
-                    rows={3}
-                  />
-                ) : (
-                  <Input
-                    id={f.key}
-                    type={f.type}
-                    value={form[f.key] || ""}
-                    onChange={(e) => handleChange(f.key, e.target.value)}
-                    placeholder={f.placeholder || ""}
-                  />
-                )}
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading settings...</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {SECTIONS.map((section) => (
+            <section
+              key={section.title}
+              className="rounded-xl border border-border bg-card"
+            >
+              <div className="border-b border-border px-6 py-4">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {section.title}
+                </h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {section.description}
+                </p>
               </div>
-            ))}
+              <div className="grid gap-5 p-6 sm:grid-cols-2">
+                {section.fields.map((f) => (
+                  <div
+                    key={f.key}
+                    className={`space-y-1.5 ${f.colSpan === 2 ? "sm:col-span-2" : ""}`}
+                  >
+                    <Label htmlFor={f.key} className="text-xs font-medium text-foreground">
+                      {f.label}
+                    </Label>
+                    {f.type === "textarea" ? (
+                      <Textarea
+                        id={f.key}
+                        value={form[f.key] || ""}
+                        onChange={(e) => handleChange(f.key, e.target.value)}
+                        placeholder={f.placeholder || ""}
+                        rows={3}
+                      />
+                    ) : (
+                      <Input
+                        id={f.key}
+                        type={f.type}
+                        value={form[f.key] || ""}
+                        onChange={(e) => handleChange(f.key, e.target.value)}
+                        placeholder={f.placeholder || ""}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
 
-            <Button type="submit" disabled={saving} className="w-full">
-              {saving ? "Saving..." : "Save Settings"}
+          <div className="flex justify-end gap-2 border-t border-border pt-5">
+            <Button type="submit" size="lg" disabled={saving}>
+              {saving ? "Saving..." : "Save settings"}
             </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

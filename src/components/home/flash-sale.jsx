@@ -1,15 +1,27 @@
+import Link from "next/link";
 import { ProductCard } from "./product-card";
-import { Flame } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function FlashSale({ products }) {
   return (
-    <section className="bg-gradient-to-r from-accent/10 via-accent/5 to-transparent py-10">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="mb-6 flex items-center gap-2">
-          <Flame className="h-6 w-6 text-accent" />
-          <h2 className="font-[family-name:var(--font-dm-sans)] text-xl font-bold sm:text-2xl">
-            Today&apos;s Hot Deals
-          </h2>
+    <section className="border-b border-border bg-muted/30 py-14 sm:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              Limited time
+            </p>
+            <h2 className="mt-1 font-[family-name:var(--font-dm-sans)] text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Today's hot deals
+            </h2>
+          </div>
+          <Link
+            href="/shop?sort=price_asc"
+            className="hidden items-center gap-1 text-sm font-medium text-foreground hover:text-muted-foreground sm:inline-flex"
+          >
+            View all
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">

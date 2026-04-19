@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Trash2 } from "lucide-react";
+import { Upload, Trash2, ImageIcon } from "lucide-react";
 
 export function ImageManager({ productId, images, onRefresh }) {
   const [uploading, setUploading] = useState(false);
@@ -71,42 +71,73 @@ export function ImageManager({ productId, images, onRefresh }) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 rounded-lg border border-dashed p-4">
-        <div className="space-y-1.5">
-          <Label>Image File (JPEG, PNG, WebP &mdash; max 5MB)</Label>
-          <Input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" />
+    <div className="space-y-6">
+      <div className="rounded-lg border border-dashed border-border bg-muted/20 p-5">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-foreground">
+              Image file
+            </Label>
+            <Input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              JPEG, PNG or WebP. Max 5MB.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-foreground">
+              Alt text (optional)
+            </Label>
+            <Input
+              value={altText}
+              onChange={(e) => setAltText(e.target.value)}
+              placeholder="Describe the image"
+            />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label>Alt Text (optional)</Label>
-          <Input value={altText} onChange={(e) => setAltText(e.target.value)} placeholder="Describe the image" />
+        <div className="mt-4 flex justify-end">
+          <Button type="button" onClick={handleUpload} disabled={uploading}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            {uploading ? "Uploading..." : "Upload image"}
+          </Button>
         </div>
-        <Button type="button" onClick={handleUpload} disabled={uploading}>
-          <Upload className="mr-2 h-4 w-4" />
-          {uploading ? "Uploading..." : "Upload"}
-        </Button>
       </div>
 
-      {images.length > 0 && (
+      {images.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-border bg-muted/20 px-6 py-12 text-center">
+          <ImageIcon className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+          <p className="text-sm font-medium text-foreground">No images yet</p>
+          <p className="text-xs text-muted-foreground">
+            Upload your first image to start building the gallery.
+          </p>
+        </div>
+      ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {images.map((img) => (
-            <div key={img.id} className="group relative overflow-hidden rounded-lg border">
+            <div
+              key={img.id}
+              className="group relative overflow-hidden rounded-lg border border-border bg-card"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={img.url}
                 alt={img.altText || "Product image"}
-                className="aspect-square w-full object-cover"
+                className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
-              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
-                <div className="flex w-full items-center justify-between p-2">
-                  <span className="truncate text-xs text-white">
+              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex w-full items-center justify-between gap-2 p-2.5">
+                  <span className="truncate text-xs text-background">
                     {img.altText || "No alt text"}
                   </span>
                   <Button
                     type="button"
                     variant="destructive"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
+                    size="icon-xs"
                     onClick={() => handleDelete(img.id)}
+                    aria-label="Delete image"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

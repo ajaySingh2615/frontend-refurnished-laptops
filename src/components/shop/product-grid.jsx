@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
 function formatPrice(price) {
   return new Intl.NumberFormat("en-IN", {
@@ -21,48 +20,51 @@ function ProductCard({ product }) {
       ? Math.round(((compareAt - price) / compareAt) * 100)
       : 0;
 
+  const stock = variant?.stock ?? 0;
+  const lowThreshold = variant?.lowStockThreshold ?? 5;
+
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="group overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-lg"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/20"
     >
-      <div className="relative aspect-square bg-muted">
+      <div className="relative aspect-square overflow-hidden bg-muted">
         {image?.url ? (
           <img
             src={image.url}
             alt={image.altText || product.name}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            No Image
+          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+            No image
           </div>
         )}
         {discount > 0 && (
-          <Badge className="absolute left-2 top-2" variant="destructive">
-            {discount}% OFF
-          </Badge>
+          <span className="absolute left-3 top-3 rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background">
+            {discount}% off
+          </span>
         )}
       </div>
 
-      <div className="p-3 space-y-1.5">
+      <div className="flex flex-1 flex-col gap-1 p-4">
         {product.brand && (
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
             {product.brand}
           </p>
         )}
-        <h3 className="text-sm font-semibold leading-tight line-clamp-2">
+        <h3 className="text-[13.5px] font-semibold leading-snug text-foreground line-clamp-2">
           {product.name}
         </h3>
 
         {product.type === "laptop" && product.processor && (
-          <p className="text-xs text-muted-foreground truncate">
-            {product.processor} &bull; {product.ram} &bull; {product.storage}
+          <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+            {[product.processor, product.ram, product.storage].filter(Boolean).join(" · ")}
           </p>
         )}
 
-        <div className="flex items-baseline gap-2 pt-1">
-          <span className="font-[family-name:var(--font-dm-sans)] text-base font-bold text-primary">
+        <div className="mt-auto flex items-baseline gap-2 pt-3">
+          <span className="text-[15px] font-semibold tracking-tight text-foreground">
             {formatPrice(price)}
           </span>
           {compareAt && compareAt > price && (
@@ -73,15 +75,15 @@ function ProductCard({ product }) {
         </div>
 
         {variant && (
-          <p className="text-xs text-muted-foreground">
-            {variant.stock > 0 ? (
-              variant.stock <= (variant.lowStockThreshold || 5) ? (
-                <span className="text-orange-600">Only {variant.stock} left</span>
+          <p className="mt-1.5 text-[11px]">
+            {stock > 0 ? (
+              stock <= lowThreshold ? (
+                <span className="text-amber-700">Only {stock} left</span>
               ) : (
-                "In Stock"
+                <span className="text-emerald-700">In stock</span>
               )
             ) : (
-              <span className="text-destructive">Out of Stock</span>
+              <span className="text-destructive">Out of stock</span>
             )}
           </p>
         )}
@@ -93,14 +95,17 @@ function ProductCard({ product }) {
 export function ProductGrid({ products }) {
   if (products.length === 0) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-muted-foreground">No products found matching your filters.</p>
+      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20">
+        <p className="text-sm font-medium text-foreground">No products found</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Try adjusting your filters or search term.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}

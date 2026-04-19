@@ -5,7 +5,6 @@ import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -22,8 +21,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { CategoryForm } from "@/components/admin/category-form";
+import { AdminPageHeader } from "@/components/admin/page-header";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -119,29 +119,36 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  if (loading) {
-    return <p className="text-muted-foreground">Loading categories...</p>;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-[family-name:var(--font-dm-sans)] text-2xl font-bold">
-          Categories
-        </h1>
-        <Button onClick={() => { setShowForm(true); setEditing(null); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Category
-        </Button>
-      </div>
+    <div className="space-y-7">
+      <AdminPageHeader
+        eyebrow="Catalog"
+        title="Categories"
+        description="Organise your product taxonomy into nested categories."
+        action={
+          !showForm && !editing ? (
+            <Button onClick={() => { setShowForm(true); setEditing(null); }}>
+              <Plus className="mr-1.5 h-4 w-4" /> Add category
+            </Button>
+          ) : null
+        }
+      />
 
       {(showForm || editing) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {editing ? "Edit Category" : "New Category"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <section className="rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+            <h2 className="text-sm font-semibold text-foreground">
+              {editing ? "Edit category" : "New category"}
+            </h2>
+            <button
+              type="button"
+              onClick={() => { setShowForm(false); setEditing(null); }}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="p-5">
             <CategoryForm
               initial={editing || undefined}
               parents={parents.filter((p) => p.id !== editing?.id)}
@@ -149,80 +156,93 @@ export default function AdminCategoriesPage() {
               onCancel={() => { setShowForm(false); setEditing(null); }}
               saving={saving}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Slug</TableHead>
+              <TableHead>Parent</TableHead>
+              <TableHead className="text-center">Order</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead className="text-center">Order</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
+                  Loading categories...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No categories yet
-                  </TableCell>
-                </TableRow>
-              ) : (
-                categories.map((cat) => {
-                  const parent = categories.find((c) => c.id === cat.parentId);
-                  return (
-                    <TableRow key={cat.id}>
-                      <TableCell className="font-medium">{cat.name}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs font-mono">
-                        {cat.slug}
-                      </TableCell>
-                      <TableCell>{parent?.name || "—"}</TableCell>
-                      <TableCell className="text-center">{cat.sortOrder}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={cat.isActive ? "default" : "secondary"}>
-                          {cat.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { setEditing(cat); setShowForm(false); }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteTarget(cat)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            ) : categories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center">
+                  <p className="text-sm font-medium text-foreground">No categories yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Create your first category to start organising products.
+                  </p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              categories.map((cat) => {
+                const parent = categories.find((c) => c.id === cat.parentId);
+                return (
+                  <TableRow key={cat.id}>
+                    <TableCell className="font-medium text-foreground">{cat.name}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {cat.slug}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {parent?.name || "—"}
+                    </TableCell>
+                    <TableCell className="text-center text-sm tabular-nums">
+                      {cat.sortOrder}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={cat.isActive ? "success" : "secondary"}>
+                        {cat.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setEditing(cat); setShowForm(false); }}
+                          aria-label="Edit"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteTarget(cat)}
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </section>
 
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
+            <DialogTitle>Delete category</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
-              This cannot be undone.
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -230,7 +250,7 @@ export default function AdminCategoriesPage() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Deleting..." : "Delete category"}
             </Button>
           </DialogFooter>
         </DialogContent>

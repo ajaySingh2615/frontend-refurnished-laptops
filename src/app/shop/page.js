@@ -12,15 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductFilters } from "@/components/shop/product-filters";
 import { ProductGrid } from "@/components/shop/product-grid";
 
 const SORT_OPTIONS = [
-  { value: "newest", label: "Newest First" },
-  { value: "price_asc", label: "Price: Low → High" },
-  { value: "price_desc", label: "Price: High → Low" },
-  { value: "name", label: "Name A-Z" },
+  { value: "newest", label: "Newest" },
+  { value: "price_asc", label: "Price: low to high" },
+  { value: "price_desc", label: "Price: high to low" },
+  { value: "name", label: "Name: A → Z" },
 ];
 
 function paramsToFilters(sp) {
@@ -50,7 +50,13 @@ function filtersToParams(filters) {
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
       <ShopPageInner />
     </Suspense>
   );
@@ -113,78 +119,114 @@ function ShopPageInner() {
   const totalPages = Math.ceil(total / filters.limit);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-6">
-        <h1 className="font-[family-name:var(--font-dm-sans)] text-2xl font-bold sm:text-3xl">
-          Shop All
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {total} product{total !== 1 ? "s" : ""} found
-        </p>
+    <div className="border-b border-border bg-muted/30">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            Catalog
+          </p>
+          <h1 className="font-[family-name:var(--font-dm-sans)] text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Shop all products
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {loading
+              ? "Loading..."
+              : `${total} ${total === 1 ? "product" : "products"} available`}
+          </p>
+        </div>
       </div>
 
-      <div className="flex gap-6">
-        <ProductFilters filters={filters} onChange={handleFilterChange} />
+      <div className="mx-auto max-w-7xl bg-background px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <ProductFilters filters={filters} onChange={handleFilterChange} />
 
-        <div className="flex-1 space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <form onSubmit={handleSearch} className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-9"
-              />
-            </form>
+          <div className="flex-1 min-w-0 space-y-6">
+            <div className="flex flex-wrap items-center gap-3 border-b border-border pb-5">
+              <form
+                onSubmit={handleSearch}
+                className="relative flex-1 min-w-[200px] max-w-md"
+              >
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-9"
+                />
+              </form>
 
-            <Select value={filters.sort} onValueChange={(v) => setFilters((prev) => ({ ...prev, sort: v, page: 1 }))}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              <Select
+                value={filters.sort}
+                onValueChange={(v) =>
+                  setFilters((prev) => ({ ...prev, sort: v, page: 1 }))
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="lg:hidden">
+                <ProductFilters
+                  filters={filters}
+                  onChange={handleFilterChange}
+                  mobileOnly
+                />
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-[3/4] animate-pulse rounded-xl border border-border bg-muted/40"
+                  />
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            ) : (
+              <ProductGrid products={products} />
+            )}
 
-            <div className="lg:hidden">
-              <ProductFilters filters={filters} onChange={handleFilterChange} />
-            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-border pt-6">
+                <p className="text-xs text-muted-foreground">
+                  Page {filters.page} of {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={filters.page <= 1}
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, page: prev.page - 1 }))
+                    }
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={filters.page >= totalPages}
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
+                    }
+                  >
+                    Next
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-
-          {loading ? (
-            <div className="flex min-h-[40vh] items-center justify-center">
-              <p className="text-muted-foreground">Loading products...</p>
-            </div>
-          ) : (
-            <ProductGrid products={products} />
-          )}
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={filters.page <= 1}
-                onClick={() => setFilters((prev) => ({ ...prev, page: prev.page - 1 }))}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {filters.page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={filters.page >= totalPages}
-                onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))}
-              >
-                Next
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -66,14 +66,20 @@ export function VariantTable({ variants, onChange, productId }) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Variants</h3>
-        <Button type="button" variant="outline" size="sm" onClick={startAdd} disabled={editIdx !== null}>
-          <Plus className="mr-1 h-3 w-3" /> Add Variant
+    <div className="space-y-4">
+      <div className="flex items-center justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={startAdd}
+          disabled={editIdx !== null}
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Add variant
         </Button>
       </div>
 
+      <div className="overflow-hidden rounded-lg border border-border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -93,20 +99,20 @@ export function VariantTable({ variants, onChange, productId }) {
               <DraftRow key={i} draft={draft} updateDraft={updateDraft} onSave={save} onCancel={cancel} />
             ) : (
               <TableRow key={i}>
-                <TableCell className="font-medium">{v.name}</TableCell>
-                <TableCell className="font-mono text-xs">{v.sku}</TableCell>
-                <TableCell>{v.price}</TableCell>
-                <TableCell>{v.compareAtPrice || "—"}</TableCell>
-                <TableCell>{v.stock}</TableCell>
-                <TableCell>{v.lowStockThreshold}</TableCell>
-                <TableCell>{v.isActive ? "Yes" : "No"}</TableCell>
+                <TableCell className="font-medium text-foreground">{v.name}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{v.sku}</TableCell>
+                <TableCell className="tabular-nums">{v.price}</TableCell>
+                <TableCell className="tabular-nums text-muted-foreground">{v.compareAtPrice || "—"}</TableCell>
+                <TableCell className="tabular-nums">{v.stock}</TableCell>
+                <TableCell className="tabular-nums text-muted-foreground">{v.lowStockThreshold}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{v.isActive ? "Yes" : "No"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button type="button" variant="ghost" size="icon" onClick={() => startEdit(i)} disabled={editIdx !== null}>
-                      <Pencil className="h-3 w-3" />
+                    <Button type="button" variant="ghost" size="icon-sm" onClick={() => startEdit(i)} disabled={editIdx !== null} aria-label="Edit">
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} disabled={variants.length <= 1}>
-                      <Trash2 className="h-3 w-3 text-destructive" />
+                    <Button type="button" variant="ghost" size="icon-sm" onClick={() => remove(i)} disabled={variants.length <= 1} aria-label="Remove">
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   </div>
                 </TableCell>
@@ -118,6 +124,7 @@ export function VariantTable({ variants, onChange, productId }) {
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }
@@ -148,11 +155,11 @@ function DraftRow({ draft, updateDraft, onSave, onCancel }) {
       </TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-1">
-          <Button type="button" variant="ghost" size="icon" onClick={onSave}>
-            <Check className="h-3 w-3 text-green-600" />
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onSave} aria-label="Save">
+            <Check className="h-3.5 w-3.5 text-emerald-600" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
-            <X className="h-3 w-3" />
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onCancel} aria-label="Cancel">
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       </TableCell>

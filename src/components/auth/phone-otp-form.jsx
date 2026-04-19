@@ -118,27 +118,29 @@ export function PhoneOtpForm() {
   if (step === "phone") {
     return (
       <form onSubmit={handleSendOtp} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone number</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="phone" className="text-xs font-medium text-foreground">
+            Phone number
+          </Label>
           <Input
             id="phone"
             type="tel"
-            placeholder="+919876543210"
+            placeholder="+91 98765 43210"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required
           />
-          <p className="text-xs text-muted-foreground">
-            Include country code (e.g. +91 for India)
-          </p>
         </div>
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-xs text-destructive">{error}</p>}
 
-        <Button type="submit" className="w-full" disabled={loading || !phone}>
-          {loading ? "Sending..." : "Send OTP"}
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={loading || !phone}
+        >
+          {loading ? "Sending..." : "Continue with phone"}
         </Button>
       </form>
     );
@@ -146,8 +148,10 @@ export function PhoneOtpForm() {
 
   return (
     <form onSubmit={handleVerifyOtp} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="otp">Verification code</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="otp" className="text-xs font-medium text-foreground">
+          Verification code
+        </Label>
         <Input
           id="otp"
           type="text"
@@ -158,40 +162,44 @@ export function PhoneOtpForm() {
           onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
           required
           autoFocus
+          className="text-center tracking-[0.4em] text-base font-medium"
         />
         <p className="text-xs text-muted-foreground">
           Enter the 6-digit code sent to {phone}
         </p>
       </div>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
 
-      <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-        {loading ? "Verifying..." : "Verify OTP"}
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        disabled={loading || otp.length !== 6}
+      >
+        {loading ? "Verifying..." : "Verify code"}
       </Button>
 
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between text-xs">
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+          className="text-muted-foreground hover:text-foreground"
           onClick={() => {
             setStep("phone");
             setOtp("");
             setError("");
           }}
         >
-          Change number
+          ← Change number
         </button>
 
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+          className="text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           disabled={countdown > 0 || loading}
           onClick={handleResend}
         >
-          {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
+          {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
         </button>
       </div>
     </form>

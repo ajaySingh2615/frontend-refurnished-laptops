@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { SlidersHorizontal, X } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SlidersHorizontal } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
-export function ProductFilters({ filters, onChange }) {
+const TYPE_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "laptop", label: "Laptops" },
+  { value: "accessory", label: "Accessories" },
+];
+
+export function ProductFilters({ filters, onChange, mobileOnly = false }) {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -41,97 +45,102 @@ export function ProductFilters({ filters, onChange }) {
   ).length;
 
   const content = (
-    <div className="space-y-5">
+    <div className="space-y-7">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Filters</h3>
+        <h3 className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-foreground">
+          Filters
+        </h3>
         {activeCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={clear}>
-            Clear all
-          </Button>
+          <button
+            type="button"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={clear}
+          >
+            Reset
+          </button>
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-muted-foreground">Type</Label>
-        <div className="flex gap-2">
-          {[
-            { value: "", label: "All" },
-            { value: "laptop", label: "Laptops" },
-            { value: "accessory", label: "Accessories" },
-          ].map((t) => (
-            <Badge
-              key={t.value}
-              variant={filters.type === t.value ? "default" : "outline"}
-              className="cursor-pointer"
+      <FilterGroup label="Type">
+        <div className="flex flex-wrap gap-1.5">
+          {TYPE_OPTIONS.map((t) => (
+            <button
+              key={t.value || "all"}
+              type="button"
               onClick={() => set("type", t.value)}
+              className={cn(
+                "inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                filters.type === t.value
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground hover:border-foreground/30"
+              )}
             >
               {t.label}
-            </Badge>
+            </button>
           ))}
         </div>
-      </div>
+      </FilterGroup>
 
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-muted-foreground">Category</Label>
-        <div className="space-y-1 max-h-48 overflow-auto">
-          <button
-            className={`block w-full text-left text-sm px-2 py-1 rounded ${!filters.category ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"}`}
+      <FilterGroup label="Category">
+        <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+          <CategoryItem
+            label="All categories"
+            active={!filters.category}
             onClick={() => set("category", "")}
-          >
-            All Categories
-          </button>
+          />
           {categories.map((cat) => (
             <div key={cat.id}>
-              <button
-                className={`block w-full text-left text-sm px-2 py-1 rounded ${filters.category === cat.slug ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"}`}
+              <CategoryItem
+                label={cat.name}
+                active={filters.category === cat.slug}
                 onClick={() => set("category", cat.slug)}
-              >
-                {cat.name}
-              </button>
+              />
               {cat.children?.map((child) => (
-                <button
+                <CategoryItem
                   key={child.id}
-                  className={`block w-full text-left text-sm pl-6 py-1 rounded ${filters.category === child.slug ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted"}`}
+                  label={child.name}
+                  active={filters.category === child.slug}
                   onClick={() => set("category", child.slug)}
-                >
-                  {child.name}
-                </button>
+                  indent
+                />
               ))}
             </div>
           ))}
         </div>
-      </div>
+      </FilterGroup>
 
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-muted-foreground">Brand</Label>
+      <FilterGroup label="Brand">
         <Input
           placeholder="e.g. Dell, HP"
           value={filters.brand || ""}
           onChange={(e) => set("brand", e.target.value)}
         />
-      </div>
+      </FilterGroup>
 
       {filters.type !== "accessory" && (
-        <>
-          <Separator />
+        <FilterGroup label="Laptop specs">
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-muted-foreground">Specs (Laptops)</Label>
-            <Input placeholder="Processor" value={filters.processor || ""} onChange={(e) => set("processor", e.target.value)} />
-            <Input placeholder="RAM (e.g. 8GB)" value={filters.ram || ""} onChange={(e) => set("ram", e.target.value)} />
-            <Input placeholder="OS" value={filters.os || ""} onChange={(e) => set("os", e.target.value)} />
+            <Input
+              placeholder="Processor"
+              value={filters.processor || ""}
+              onChange={(e) => set("processor", e.target.value)}
+            />
+            <Input
+              placeholder="RAM (e.g. 8GB)"
+              value={filters.ram || ""}
+              onChange={(e) => set("ram", e.target.value)}
+            />
+            <Input
+              placeholder="Operating system"
+              value={filters.os || ""}
+              onChange={(e) => set("os", e.target.value)}
+            />
           </div>
-        </>
+        </FilterGroup>
       )}
 
-      <Separator />
-
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-muted-foreground">Price Range</Label>
-        <div className="flex gap-2">
+      <FilterGroup label="Price (₹)">
+        <div className="flex items-center gap-2">
           <Input
             type="number"
             min={0}
@@ -139,6 +148,7 @@ export function ProductFilters({ filters, onChange }) {
             value={filters.minPrice || ""}
             onChange={(e) => set("minPrice", e.target.value)}
           />
+          <span className="text-muted-foreground">–</span>
           <Input
             type="number"
             min={0}
@@ -147,31 +157,60 @@ export function ProductFilters({ filters, onChange }) {
             onChange={(e) => set("maxPrice", e.target.value)}
           />
         </div>
-      </div>
+      </FilterGroup>
     </div>
   );
 
-  return (
-    <>
-      {/* Desktop sidebar */}
-      <div className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-4">{content}</div>
-      </div>
-
-      {/* Mobile drawer */}
-      <div className="lg:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
+  if (mobileOnly) {
+    return (
+      <Sheet>
+        <SheetTrigger
+          render={
+            <Button variant="outline" size="sm" className="lg:hidden">
+              <SlidersHorizontal className="h-4 w-4" />
               Filters {activeCount > 0 && `(${activeCount})`}
             </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-80 overflow-auto p-4">
-            {content}
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+          }
+        />
+        <SheetContent side="left" className="w-[320px] overflow-y-auto p-5 pt-12">
+          {content}
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <aside className="hidden w-60 shrink-0 lg:block">
+      <div className="sticky top-20">{content}</div>
+    </aside>
+  );
+}
+
+function FilterGroup({ label, children }) {
+  return (
+    <div className="space-y-2.5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function CategoryItem({ label, active, onClick, indent }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "block w-full truncate rounded px-2 py-1.5 text-left text-sm transition-colors",
+        indent && "pl-6 text-[13px]",
+        active
+          ? "bg-foreground text-background font-medium"
+          : "text-foreground hover:bg-muted"
+      )}
+    >
+      {label}
+    </button>
   );
 }

@@ -1,21 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function ProductGallery({ images }) {
   const [selected, setSelected] = useState(0);
 
   if (!images || images.length === 0) {
     return (
-      <div className="aspect-square w-full rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
-        No Image Available
+      <div className="flex aspect-square w-full items-center justify-center rounded-xl border border-border bg-muted text-sm text-muted-foreground">
+        No image available
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="aspect-square overflow-hidden rounded-xl border bg-muted">
+    <div className="space-y-4">
+      <div className="aspect-square overflow-hidden rounded-xl border border-border bg-muted">
         <img
           src={images[selected]?.url}
           alt={images[selected]?.altText || "Product image"}
@@ -24,14 +25,17 @@ export function ProductGallery({ images }) {
       </div>
 
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-auto">
+        <div className="grid grid-cols-5 gap-2">
           {images.map((img, i) => (
             <button
               key={img.id}
               onClick={() => setSelected(i)}
-              className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
-                i === selected ? "border-primary" : "border-transparent hover:border-muted-foreground/30"
-              }`}
+              className={cn(
+                "aspect-square overflow-hidden rounded-md border bg-muted transition-colors",
+                i === selected
+                  ? "border-foreground"
+                  : "border-border hover:border-foreground/30"
+              )}
             >
               <img
                 src={img.url}
