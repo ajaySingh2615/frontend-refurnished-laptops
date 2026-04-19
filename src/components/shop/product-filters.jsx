@@ -267,7 +267,13 @@ function PresetFilterSelect({
         }}
       >
         <SelectTrigger className="h-9">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>
+            {(val) => {
+              if (val === SPEC_SELECT_EMPTY) return "Any";
+              if (val === SPEC_SELECT_OTHER) return "Custom…";
+              return val != null ? String(val) : "";
+            }}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={SPEC_SELECT_EMPTY}>Any</SelectItem>

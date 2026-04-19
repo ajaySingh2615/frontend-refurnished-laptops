@@ -71,7 +71,13 @@ export function SpecSelectField({
         }}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Choose…" />
+          <SelectValue placeholder={emptyLabel}>
+            {(val) => {
+              if (val === SPEC_SELECT_EMPTY) return emptyLabel;
+              if (val === SPEC_SELECT_OTHER) return "Other (custom)";
+              return val != null ? String(val) : "";
+            }}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={SPEC_SELECT_EMPTY}>{emptyLabel}</SelectItem>
