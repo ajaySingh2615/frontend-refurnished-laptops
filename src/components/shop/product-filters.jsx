@@ -4,7 +4,22 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SlidersHorizontal } from "lucide-react";
+import {
+  BRAND_OPTIONS,
+  OS_OPTIONS,
+  PROCESSOR_OPTIONS,
+  RAM_OPTIONS,
+  SPEC_SELECT_EMPTY,
+  SPEC_SELECT_OTHER,
+} from "@/lib/product-spec-options";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +31,8 @@ const TYPE_OPTIONS = [
 
 export function ProductFilters({ filters, onChange, mobileOnly = false }) {
   const [categories, setCategories] = useState([]);
+  /** Bumps when filters reset so preset selects clear internal “Other (empty)” state. */
+  const [filterEpoch, setFilterEpoch] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -37,6 +54,7 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
   }
 
   function clear() {
+    setFilterEpoch((e) => e + 1);
     onChange({ page: 1, limit: 20, sort: "newest" });
   }
 
@@ -110,30 +128,42 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
       </FilterGroup>
 
       <FilterGroup label="Brand">
-        <Input
-          placeholder="e.g. Dell, HP"
+        <PresetFilterSelect
+          options={BRAND_OPTIONS}
           value={filters.brand || ""}
-          onChange={(e) => set("brand", e.target.value)}
+          onChange={(v) => set("brand", v)}
+          placeholder="Any brand"
+          inputPlaceholder="Type brand"
+          resetKey={filterEpoch}
         />
       </FilterGroup>
 
       {filters.type !== "accessory" && (
         <FilterGroup label="Laptop specs">
           <div className="space-y-2">
-            <Input
-              placeholder="Processor"
+            <PresetFilterSelect
+              options={PROCESSOR_OPTIONS}
               value={filters.processor || ""}
-              onChange={(e) => set("processor", e.target.value)}
+              onChange={(v) => set("processor", v)}
+              placeholder="Processor"
+              inputPlaceholder="Type processor"
+              resetKey={filterEpoch}
             />
-            <Input
-              placeholder="RAM (e.g. 8GB)"
+            <PresetFilterSelect
+              options={RAM_OPTIONS}
               value={filters.ram || ""}
-              onChange={(e) => set("ram", e.target.value)}
+              onChange={(v) => set("ram", v)}
+              placeholder="RAM"
+              inputPlaceholder="e.g. 8 GB"
+              resetKey={filterEpoch}
             />
-            <Input
-              placeholder="Operating system"
+            <PresetFilterSelect
+              options={OS_OPTIONS}
               value={filters.os || ""}
-              onChange={(e) => set("os", e.target.value)}
+              onChange={(v) => set("os", v)}
+              placeholder="Operating system"
+              inputPlaceholder="Type OS"
+              resetKey={filterEpoch}
             />
           </div>
         </FilterGroup>
@@ -193,6 +223,74 @@ function FilterGroup({ label, children }) {
         {label}
       </p>
       {children}
+    </div>
+  );
+}
+
+/** Preset list + optional custom text; matches admin catalog values for RAM (exact) and partial OS/processor. */
+function PresetFilterSelect({
+  options,
+  value,
+  onChange,
+  placeholder,
+  inputPlaceholder,
+  resetKey,
+}) {
+  const v = value ?? "";
+  const [emptyCustom, setEmptyCustom] = useState(false);
+
+  useEffect(() => {
+    setEmptyCustom(false);
+  }, [resetKey]);
+
+  const selectValue = options.includes(v)
+    ? v
+    : v !== "" || emptyCustom
+      ? SPEC_SELECT_OTHER
+      : SPEC_SELECT_EMPTY;
+
+  return (
+    <div className="space-y-1.5">
+      <Select
+        value={selectValue}
+        onValueChange={(next) => {
+          if (next === SPEC_SELECT_EMPTY) {
+            setEmptyCustom(false);
+            onChange("");
+          } else if (next === SPEC_SELECT_OTHER) {
+            setEmptyCustom(true);
+            onChange("");
+          } else {
+            setEmptyCustom(false);
+            onChange(next);
+          }
+        }}
+      >
+        <SelectTrigger className="h-9">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SPEC_SELECT_EMPTY}>Any</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o} value={o}>
+              {o}
+            </SelectItem>
+          ))}
+          <SelectItem value={SPEC_SELECT_OTHER}>Custom…</SelectItem>
+        </SelectContent>
+      </Select>
+      {selectValue === SPEC_SELECT_OTHER && (
+        <Input
+          className="h-9"
+          value={v}
+          onChange={(e) => {
+            const next = e.target.value;
+            onChange(next);
+            if (next === "") setEmptyCustom(true);
+          }}
+          placeholder={inputPlaceholder}
+        />
+      )}
     </div>
   );
 }

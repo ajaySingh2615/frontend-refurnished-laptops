@@ -19,8 +19,19 @@ import {
 } from "@/components/ui/select";
 import { VariantTable } from "./variant-table";
 import { ImageManager } from "./image-manager";
+import { SpecSelectField } from "./spec-select-field";
 import { normalizeAdminVariant } from "@/lib/product-admin-utils";
 import { suggestVariantSku } from "@/lib/sku-utils";
+import {
+  BRAND_OPTIONS,
+  RAM_OPTIONS,
+  STORAGE_OPTIONS,
+  OS_OPTIONS,
+  CONDITION_GRADE_OPTIONS,
+  DISPLAY_OPTIONS,
+  GPU_OPTIONS,
+  PROCESSOR_OPTIONS,
+} from "@/lib/product-spec-options";
 
 const defaultVariant = {
   name: "Default",
@@ -396,12 +407,14 @@ export function ProductForm({ productId }) {
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Brand">
-                <Input
-                  value={form.brand}
-                  onChange={(e) => handleChange("brand", e.target.value)}
-                />
-              </Field>
+              <SpecSelectField
+                label="Brand"
+                options={BRAND_OPTIONS}
+                value={form.brand}
+                onChange={(v) => handleChange("brand", v)}
+                customPlaceholder="Enter brand name"
+                resetKey={productId}
+              />
             </div>
 
             <div className="mt-5">
@@ -456,27 +469,62 @@ export function ProductForm({ productId }) {
           {form.type === "laptop" && (
             <Section title="Laptop specifications" description="Technical details surfaced on the product page.">
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <Field label="Processor">
-                  <Input value={form.processor} onChange={(e) => handleChange("processor", e.target.value)} />
-                </Field>
-                <Field label="RAM">
-                  <Input value={form.ram} onChange={(e) => handleChange("ram", e.target.value)} placeholder="8GB" />
-                </Field>
-                <Field label="Storage">
-                  <Input value={form.storage} onChange={(e) => handleChange("storage", e.target.value)} placeholder="256GB SSD" />
-                </Field>
-                <Field label="Display">
-                  <Input value={form.display} onChange={(e) => handleChange("display", e.target.value)} />
-                </Field>
-                <Field label="GPU">
-                  <Input value={form.gpu} onChange={(e) => handleChange("gpu", e.target.value)} />
-                </Field>
-                <Field label="Operating system">
-                  <Input value={form.os} onChange={(e) => handleChange("os", e.target.value)} placeholder="Windows 11" />
-                </Field>
-                <Field label="Condition grade">
-                  <Input value={form.conditionGrade} onChange={(e) => handleChange("conditionGrade", e.target.value)} placeholder="A+" />
-                </Field>
+                <SpecSelectField
+                  label="Processor"
+                  options={PROCESSOR_OPTIONS}
+                  value={form.processor}
+                  onChange={(v) => handleChange("processor", v)}
+                  customPlaceholder="e.g. Intel Core i5-8250U"
+                  resetKey={productId}
+                />
+                <SpecSelectField
+                  label="RAM"
+                  options={RAM_OPTIONS}
+                  value={form.ram}
+                  onChange={(v) => handleChange("ram", v)}
+                  customPlaceholder="e.g. 8 GB"
+                  resetKey={productId}
+                />
+                <SpecSelectField
+                  label="Storage"
+                  options={STORAGE_OPTIONS}
+                  value={form.storage}
+                  onChange={(v) => handleChange("storage", v)}
+                  customPlaceholder="e.g. 256 GB SSD"
+                  resetKey={productId}
+                />
+                <SpecSelectField
+                  label="Display"
+                  options={DISPLAY_OPTIONS}
+                  value={form.display}
+                  onChange={(v) => handleChange("display", v)}
+                  customPlaceholder='e.g. 15.6" FHD'
+                  resetKey={productId}
+                />
+                <SpecSelectField
+                  label="GPU"
+                  options={GPU_OPTIONS}
+                  value={form.gpu}
+                  onChange={(v) => handleChange("gpu", v)}
+                  customPlaceholder="Enter GPU model"
+                  resetKey={productId}
+                />
+                <SpecSelectField
+                  label="Operating system"
+                  options={OS_OPTIONS}
+                  value={form.os}
+                  onChange={(v) => handleChange("os", v)}
+                  customPlaceholder="e.g. Windows 11 Home"
+                  resetKey={productId}
+                />
+                <SpecSelectField
+                  label="Condition grade"
+                  options={CONDITION_GRADE_OPTIONS}
+                  value={form.conditionGrade}
+                  onChange={(v) => handleChange("conditionGrade", v)}
+                  customPlaceholder="e.g. A+"
+                  resetKey={productId}
+                />
                 <Field label="Warranty (months)">
                   <Input
                     type="number"
