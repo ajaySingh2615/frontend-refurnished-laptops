@@ -6,11 +6,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Upload, Trash2, ImageIcon } from "lucide-react";
 
-export function ImageManager({ productId, images, onRefresh }) {
+export function ImageManager({ productId, images, variants = [], onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const [altText, setAltText] = useState("");
+  const [uploadVariantId, setUploadVariantId] = useState("all");
   const fileRef = useRef(null);
 
   async function handleUpload() {
@@ -26,6 +34,9 @@ export function ImageManager({ productId, images, onRefresh }) {
       fd.append("image", file);
       if (altText) fd.append("altText", altText);
       fd.append("sortOrder", String(images.length));
+      if (uploadVariantId && uploadVariantId !== "all") {
+        fd.append("variantId", uploadVariantId);
+      }
 
       const res = await apiUpload(`/api/admin/products/${productId}/images`, fd);
       const json = await res.json();
@@ -33,6 +44,7 @@ export function ImageManager({ productId, images, onRefresh }) {
       if (res.ok) {
         toast.success("Image uploaded");
         setAltText("");
+        setUploadVariantId("all");
         if (fileRef.current) fileRef.current.value = "";
         onRefresh();
       } else {
@@ -56,6 +68,25 @@ export function ImageManager({ productId, images, onRefresh }) {
       } else {
         const json = await res.json();
         toast.error(json.message || "Delete failed");
+      }
+    } catch {
+      toast.error("Network error");
+    }
+  }
+
+  async function handleVariantChange(imageId, value) {
+    const variantId = value === "all" ? null : value;
+    try {
+      const res = await apiFetch(`/api/admin/products/${productId}/images/${imageId}`, {
+        method: "PUT",
+        body: JSON.stringify({ variantId }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        toast.success("Image updated");
+        onRefresh();
+      } else {
+        toast.error(json.message || "Update failed");
       }
     } catch {
       toast.error("Network error");
@@ -98,6 +129,30 @@ export function ImageManager({ productId, images, onRefresh }) {
             />
           </div>
         </div>
+
+        <div className="mt-4 space-y-1.5">
+          <Label className="text-xs font-medium text-foreground">
+            Show this image for
+          </Label>
+          <Select value={uploadVariantId} onValueChange={setUploadVariantId}>
+            <SelectTrigger className="max-w-md">
+              <SelectValue placeholder="Choose variant" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All variants (shared gallery)</SelectItem>
+              {variants.map((v) => (
+                <SelectItem key={v.id} value={v.id}>
+                  {v.name} — {v.sku}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground">
+            On the shop, customers see images for their selected variant when you assign variant-specific photos;
+            otherwise they see all shared images.
+          </p>
+        </div>
+
         <div className="mt-4 flex justify-end">
           <Button type="button" onClick={handleUpload} disabled={uploading}>
             <Upload className="mr-1.5 h-4 w-4" />
@@ -115,33 +170,53 @@ export function ImageManager({ productId, images, onRefresh }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {images.map((img) => (
             <div
               key={img.id}
-              className="group relative overflow-hidden rounded-lg border border-border bg-card"
+              className="overflow-hidden rounded-lg border border-border bg-card"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={img.url}
-                alt={img.altText || "Product image"}
-                className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              />
-              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
-                <div className="flex w-full items-center justify-between gap-2 p-2.5">
-                  <span className="truncate text-xs text-background">
-                    {img.altText || "No alt text"}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon-xs"
-                    onClick={() => handleDelete(img.id)}
-                    aria-label="Delete image"
+              <div className="relative aspect-square bg-muted">
+                <img
+                  src={img.url}
+                  alt={img.altText || "Product image"}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="space-y-2 border-t border-border p-3">
+                <p className="truncate text-xs text-muted-foreground">
+                  {img.altText || "No alt text"}
+                </p>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-foreground">Assigned to</Label>
+                  <Select
+                    value={img.variantId || "all"}
+                    onValueChange={(v) => handleVariantChange(img.id, v)}
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All variants</SelectItem>
+                      {variants.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.name} — {v.sku}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+                <Button
+                  type="button"
+                  variant="destructive-outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleDelete(img.id)}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  Remove image
+                </Button>
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { imagesForVariant } from "@/lib/product-images";
 
 function formatPrice(price) {
   return new Intl.NumberFormat("en-IN", {
@@ -12,7 +13,8 @@ function formatPrice(price) {
 
 function ProductCard({ product }) {
   const variant = product.variants?.[0];
-  const image = product.images?.[0];
+  const gallery = imagesForVariant(product.images, variant?.id);
+  const image = gallery[0];
   const price = variant ? Number(variant.price) : 0;
   const compareAt = variant?.compareAtPrice ? Number(variant.compareAtPrice) : null;
   const discount =

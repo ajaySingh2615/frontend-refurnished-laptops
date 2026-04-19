@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { VariantTable } from "./variant-table";
 import { ImageManager } from "./image-manager";
+import { normalizeAdminVariant } from "@/lib/product-admin-utils";
 
 const defaultVariant = {
   name: "Default",
@@ -75,7 +76,7 @@ export function ProductForm({ productId }) {
     type: "laptop",
     brand: "",
     hsnCode: "",
-    gstPercent: 18,
+    gstPercent: "18",
     isPublished: false,
     isFeatured: false,
     processor: "",
@@ -106,32 +107,46 @@ export function ProductForm({ productId }) {
     if (!productId) return;
     try {
       const res = await apiFetch(`/api/admin/products/${productId}`);
-      if (res.ok) {
-        const json = await res.json();
-        const p = json.data;
-        setForm({
-          categoryId: p.categoryId || "",
-          name: p.name || "",
-          slug: p.slug || "",
-          description: p.description || "",
-          type: p.type || "laptop",
-          brand: p.brand || "",
-          hsnCode: p.hsnCode || "",
-          gstPercent: p.gstPercent ?? 18,
-          isPublished: p.isPublished ?? false,
-          isFeatured: p.isFeatured ?? false,
-          processor: p.processor || "",
-          ram: p.ram || "",
-          storage: p.storage || "",
-          display: p.display || "",
-          gpu: p.gpu || "",
-          os: p.os || "",
-          conditionGrade: p.conditionGrade || "",
-          warrantyMonths: p.warrantyMonths ?? "",
-        });
-        if (p.variants?.length) setVariants(p.variants);
-        if (p.images?.length) setImages(p.images);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.message || "Could not load product");
+        setLoading(false);
+        return;
       }
+      const json = await res.json();
+      const p = json.data;
+      setForm({
+        categoryId: p.categoryId || "",
+        name: p.name || "",
+        slug: p.slug || "",
+        description: p.description || "",
+        type: p.type || "laptop",
+        brand: p.brand || "",
+        hsnCode: p.hsnCode || "",
+        gstPercent:
+          p.gstPercent != null && p.gstPercent !== ""
+            ? String(Number(p.gstPercent))
+            : "18",
+        isPublished: p.isPublished ?? false,
+        isFeatured: p.isFeatured ?? false,
+        processor: p.processor || "",
+        ram: p.ram || "",
+        storage: p.storage || "",
+        display: p.display || "",
+        gpu: p.gpu || "",
+        os: p.os || "",
+        conditionGrade: p.conditionGrade || "",
+        warrantyMonths:
+          p.warrantyMonths != null && p.warrantyMonths !== ""
+            ? String(p.warrantyMonths)
+            : "",
+      });
+      if (p.variants?.length) {
+        setVariants(p.variants.map(normalizeAdminVariant));
+      } else {
+        setVariants([{ ...defaultVariant }]);
+      }
+      setImages(p.images || []);
     } catch {
       toast.error("Failed to load product");
     } finally {
@@ -156,7 +171,7 @@ export function ProductForm({ productId }) {
       if (!payload.slug) delete payload.slug;
       if (payload.warrantyMonths === "") delete payload.warrantyMonths;
       else payload.warrantyMonths = Number(payload.warrantyMonths);
-      payload.gstPercent = Number(payload.gstPercent);
+      payload.gstPercent = Number(payload.gstPercent || 0);
 
       if (payload.type !== "laptop") {
         delete payload.processor;
@@ -218,7 +233,7 @@ export function ProductForm({ productId }) {
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="variants">Variants</TabsTrigger>
-          {isEdit && <TabsTrigger value="images">Images</TabsTrigger>}
+          <TabsTrigger value="images">Images</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-5 space-y-6">
@@ -362,27 +377,38 @@ export function ProductForm({ productId }) {
             <VariantTable
               variants={variants}
               onChange={setVariants}
-              productId={productId}
+              productId={isEdit ? productId : undefined}
+              onSaved={isEdit ? loadProduct : undefined}
             />
-            {isEdit && (
-              <p className="mt-4 text-xs text-muted-foreground">
-                Variant changes on an existing product should be managed via the backend admin variant API.
-              </p>
-            )}
           </Section>
         </TabsContent>
 
-        {isEdit && (
-          <TabsContent value="images" className="mt-5">
-            <Section title="Images" description="Upload and curate the product gallery.">
+        <TabsContent value="images" className="mt-5">
+          {isEdit ? (
+            <Section
+              title="Images"
+              description="Photos apply to the whole listing. Optionally link a photo to one variant (e.g. different colour) or leave “All variants” for shared shots."
+            >
               <ImageManager
                 productId={productId}
                 images={images}
+                variants={variants.filter((v) => v.id)}
                 onRefresh={loadProduct}
               />
             </Section>
-          </TabsContent>
-        )}
+          ) : (
+            <Section
+              title="Images"
+              description="Uploads are available after the product is created."
+            >
+              <p className="text-sm text-muted-foreground">
+                Save this product with <strong className="text-foreground">Create product</strong> below. You&apos;ll be
+                taken to edit mode where you can upload images and choose whether each image is for a specific variant
+                or for all variants.
+              </p>
+            </Section>
+          )}
+        </TabsContent>
       </Tabs>
 
       <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-2 border-t border-border bg-background/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">

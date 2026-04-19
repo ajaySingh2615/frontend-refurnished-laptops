@@ -11,6 +11,7 @@ import { ShopByFilters } from "@/components/home/shop-by-filters";
 import { WhyChooseUs } from "@/components/home/why-choose-us";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { imagesForVariant } from "@/lib/product-images";
 
 function apiToMock(product) {
   const v = product.variants?.[0];
@@ -20,13 +21,14 @@ function apiToMock(product) {
     originalPrice > price
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : 0;
+  const gallery = imagesForVariant(product.images, v?.id);
 
   return {
     id: product.id,
     slug: product.slug,
     name: product.name,
     brand: product.brand || "",
-    image: product.images?.[0]?.url || "/placeholder.png",
+    image: gallery[0]?.url || product.images?.[0]?.url || "/placeholder.png",
     price,
     originalPrice,
     discount,

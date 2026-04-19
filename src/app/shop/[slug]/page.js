@@ -101,7 +101,7 @@ export default function ProductDetailPage({ params }) {
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        <ProductGallery images={product.images} />
+        <ProductGallery images={product.images} variantId={selectedVariant?.id} />
 
         <div>
           <div className="space-y-4">
