@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import {
 import { VariantTable } from "./variant-table";
 import { ImageManager } from "./image-manager";
 import { normalizeAdminVariant } from "@/lib/product-admin-utils";
+import { suggestVariantSku } from "@/lib/sku-utils";
 
 const defaultVariant = {
   name: "Default",
@@ -90,6 +91,33 @@ export function ProductForm({ productId }) {
   });
 
   const [variants, setVariants] = useState([{ ...defaultVariant }]);
+  const [parentCategoryId, setParentCategoryId] = useState("");
+
+  const parentOptions = useMemo(
+    () =>
+      [...categories.filter((c) => !c.parentId)].sort(
+        (a, b) =>
+          (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name)
+      ),
+    [categories]
+  );
+
+  const childOptions = useMemo(() => {
+    if (!parentCategoryId) return [];
+    return categories
+      .filter((c) => c.parentId === parentCategoryId)
+      .sort(
+        (a, b) =>
+          (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name)
+      );
+  }, [categories, parentCategoryId]);
+
+  useEffect(() => {
+    if (!form.categoryId || categories.length === 0) return;
+    const cat = categories.find((c) => c.id === form.categoryId);
+    if (!cat) return;
+    setParentCategoryId(cat.parentId || cat.id);
+  }, [form.categoryId, categories]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -163,10 +191,39 @@ export function ProductForm({ productId }) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function handleParentCategoryChange(id) {
+    setParentCategoryId(id);
+    const children = categories.filter((c) => c.parentId === id);
+    if (children.length === 0) {
+      handleChange("categoryId", id);
+    } else {
+      handleChange("categoryId", "");
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
     try {
+      if (!parentCategoryId) {
+        toast.error("Select a parent category");
+        setSaving(false);
+        return;
+      }
+      const childrenUnderParent = categories.filter(
+        (c) => c.parentId === parentCategoryId
+      );
+      if (childrenUnderParent.length > 0 && !form.categoryId) {
+        toast.error("Select a subcategory");
+        setSaving(false);
+        return;
+      }
+      if (!form.categoryId) {
+        toast.error("Select a category");
+        setSaving(false);
+        return;
+      }
+
       const payload = { ...form };
       if (!payload.slug) delete payload.slug;
       if (payload.warrantyMonths === "") delete payload.warrantyMonths;
@@ -196,13 +253,29 @@ export function ProductForm({ productId }) {
           toast.error(json.message || "Update failed");
         }
       } else {
-        payload.variants = variants.map((v) => ({
-          ...v,
-          price: Number(v.price),
-          compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
-          stock: Number(v.stock),
-          lowStockThreshold: Number(v.lowStockThreshold),
-        }));
+        payload.variants = variants.map((v, i) => {
+          const others = variants
+            .filter((_, j) => j !== i)
+            .map((x) => x.sku)
+            .filter(Boolean);
+          let sku = v.sku?.trim();
+          if (!sku) {
+            sku = suggestVariantSku({
+              productSlug: form.slug,
+              productName: form.name,
+              variantName: v.name,
+              existingSkus: others,
+            });
+          }
+          return {
+            ...v,
+            sku,
+            price: Number(v.price),
+            compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+            stock: Number(v.stock),
+            lowStockThreshold: Number(v.lowStockThreshold),
+          };
+        });
 
         const res = await apiFetch("/api/admin/products", {
           method: "POST",
@@ -255,20 +328,65 @@ export function ProductForm({ productId }) {
               </Field>
             </div>
 
-            <div className="mt-5 grid gap-5 sm:grid-cols-3">
-              <Field label="Category" required>
+            <div className="mt-5 space-y-4">
+              <Field
+                label="Parent category"
+                required
+                hint="Pick the top-level department first. Subcategories appear in the next step."
+              >
                 <Select
-                  value={form.categoryId}
-                  onValueChange={(v) => handleChange("categoryId", v)}
+                  value={parentCategoryId || undefined}
+                  onValueChange={handleParentCategoryChange}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent category" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    {parentOptions.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
+
+              {parentCategoryId && childOptions.length > 0 && (
+                <Field
+                  label="Subcategory"
+                  required
+                  hint="Choose the specific shelf this product belongs on."
+                >
+                  <Select
+                    value={form.categoryId || undefined}
+                    onValueChange={(v) => handleChange("categoryId", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {childOptions.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+
+              {parentCategoryId && childOptions.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  This department has no subcategories — the product will use{" "}
+                  <span className="font-medium text-foreground">
+                    {parentOptions.find((p) => p.id === parentCategoryId)?.name || "this category"}
+                  </span>
+                  .
+                </p>
+              )}
+            </div>
+
+            <div className="mt-5 grid gap-5 sm:grid-cols-3">
               <Field label="Type" required>
                 <Select value={form.type} onValueChange={(v) => handleChange("type", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -379,6 +497,10 @@ export function ProductForm({ productId }) {
               onChange={setVariants}
               productId={isEdit ? productId : undefined}
               onSaved={isEdit ? loadProduct : undefined}
+              skuContext={{
+                productSlug: form.slug,
+                productName: form.name,
+              }}
             />
           </Section>
         </TabsContent>
