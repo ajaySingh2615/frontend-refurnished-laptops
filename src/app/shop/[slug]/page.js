@@ -2,7 +2,9 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { useCart } from "@/lib/cart-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, ChevronRight, ShieldCheck, Truck, RefreshCw } from "lucide-react";
@@ -19,9 +21,12 @@ function formatPrice(price) {
 
 export default function ProductDetailPage({ params }) {
   const { slug } = use(params);
+  const router = useRouter();
+  const { addItem } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -36,13 +41,22 @@ export default function ProductDetailPage({ params }) {
       } catch {
         // silent
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     }
     load();
   }, [slug]);
 
-  if (loading) {
+  async function handleAddToCart({ checkoutAfter = false } = {}) {
+    if (!selectedVariant) return;
+    setAdding(true);
+    const res = await addItem(selectedVariant.id, 1);
+    setAdding(false);
+    if (res.ok && checkoutAfter) router.push("/checkout");
+    if (!res.ok && res.requiresAuth) router.push("/login");
+  }
+
+  if (initialLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <p className="text-sm text-muted-foreground">Loading...</p>
@@ -151,11 +165,22 @@ export default function ProductDetailPage({ params }) {
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="xl" className="flex-1" disabled={stock === 0}>
+            <Button
+              size="xl"
+              className="flex-1"
+              disabled={stock === 0 || adding}
+              onClick={() => handleAddToCart()}
+            >
               <ShoppingCart className="h-4 w-4" />
-              {stock === 0 ? "Out of stock" : "Add to cart"}
+              {stock === 0 ? "Out of stock" : adding ? "Adding..." : "Add to cart"}
             </Button>
-            <Button size="xl" variant="outline" className="flex-1" disabled={stock === 0}>
+            <Button
+              size="xl"
+              variant="outline"
+              className="flex-1"
+              disabled={stock === 0 || adding}
+              onClick={() => handleAddToCart({ checkoutAfter: true })}
+            >
               Buy it now
             </Button>
           </div>

@@ -8,17 +8,40 @@ import {
   FolderTree,
   Package,
   Warehouse,
+  ShoppingBag,
+  Percent,
+  Truck,
+  Users,
   X,
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/categories", label: "Categories", icon: FolderTree },
-  { href: "/admin/inventory", label: "Inventory", icon: Warehouse },
-  { href: "/admin/settings", label: "Shop settings", icon: Settings },
+const navGroups = [
+  {
+    label: "Store",
+    items: [
+      { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+      { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+    ],
+  },
+  {
+    label: "Catalog",
+    items: [
+      { href: "/admin/products", label: "Products", icon: Package },
+      { href: "/admin/categories", label: "Categories", icon: FolderTree },
+      { href: "/admin/inventory", label: "Inventory", icon: Warehouse },
+    ],
+  },
+  {
+    label: "Configuration",
+    items: [
+      { href: "/admin/tax-rates", label: "Tax rates", icon: Percent },
+      { href: "/admin/shipping-methods", label: "Shipping", icon: Truck },
+      { href: "/admin/users", label: "Users", icon: Users },
+      { href: "/admin/settings", label: "Shop settings", icon: Settings },
+    ],
+  },
 ];
 
 export function AdminSidebar({ open, onClose }) {
@@ -56,42 +79,42 @@ export function AdminSidebar({ open, onClose }) {
           </button>
         </div>
 
-        <div className="px-3 pt-5">
-          <p className="px-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Manage
-          </p>
-        </div>
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pt-5 pb-4">
+          {navGroups.map((group) => (
+            <div key={group.label} className="space-y-0.5">
+              <p className="px-2 pb-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const isActive = item.exact
+                  ? pathname === item.href
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-        <nav className="flex-1 space-y-0.5 px-3 pt-2">
-          {navItems.map((item) => {
-            const isActive =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-foreground text-background"
-                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    "h-4 w-4",
-                    isActive ? "text-background" : "text-muted-foreground group-hover:text-foreground"
-                  )}
-                  strokeWidth={1.6}
-                />
-                {item.label}
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClose}
+                    className={cn(
+                      "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-foreground text-background"
+                        : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        "h-4 w-4",
+                        isActive ? "text-background" : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                      strokeWidth={1.6}
+                    />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-border p-3">

@@ -1,13 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
+import { apiFetch } from "@/lib/api";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   ShoppingBag,
-  Heart,
   MonitorSmartphone,
   MapPin,
   Settings,
@@ -17,22 +18,16 @@ import {
   Shield,
 } from "lucide-react";
 
-const stats = [
-  { label: "Orders", value: "0", icon: ShoppingBag },
-  { label: "Wishlist", value: "0", icon: Heart },
-  { label: "Active sessions", value: "—", icon: MonitorSmartphone },
-];
-
 const quickActions = [
   {
     label: "My orders",
-    href: "#",
+    href: "/dashboard/orders",
     icon: ShoppingBag,
     description: "Track and manage your orders",
   },
   {
     label: "Saved addresses",
-    href: "#",
+    href: "/dashboard/addresses",
     icon: MapPin,
     description: "Manage delivery addresses",
   },
@@ -52,6 +47,38 @@ const quickActions = [
 
 function DashboardContent() {
   const { user } = useAuth();
+  const [counts, setCounts] = useState({ orders: null, addresses: null });
+
+  useEffect(() => {
+    (async () => {
+      const [o, a] = await Promise.all([
+        apiFetch("/api/orders?page=1&limit=1").then((r) =>
+          r.ok ? r.json() : { data: { total: 0 } }
+        ),
+        apiFetch("/api/addresses").then((r) =>
+          r.ok ? r.json() : { data: [] }
+        ),
+      ]);
+      setCounts({
+        orders: o.data?.total ?? 0,
+        addresses: (a.data || []).length,
+      });
+    })();
+  }, []);
+
+  const stats = [
+    {
+      label: "Orders",
+      value: counts.orders === null ? "—" : String(counts.orders),
+      icon: ShoppingBag,
+    },
+    {
+      label: "Saved addresses",
+      value: counts.addresses === null ? "—" : String(counts.addresses),
+      icon: MapPin,
+    },
+    { label: "Sessions", value: "—", icon: MonitorSmartphone },
+  ];
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">

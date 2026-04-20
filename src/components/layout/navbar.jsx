@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/lib/cart-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -42,6 +43,7 @@ const navLinks = [
 
 export function Navbar() {
   const { user, loading, logout } = useAuth();
+  const { cart, setDrawerOpen } = useCart();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -177,10 +179,17 @@ export function Navbar() {
           </button>
 
           <button
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Cart"
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Open cart"
           >
             <ShoppingBag className="h-4.5 w-4.5" />
+            {cart.itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background">
+                {cart.itemCount > 9 ? "9+" : cart.itemCount}
+              </span>
+            )}
           </button>
 
           {loading ? (
