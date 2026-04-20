@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,9 @@ import {
   SPEC_SELECT_EMPTY,
   SPEC_SELECT_OTHER,
 } from "@/lib/product-spec-options";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { countActiveShopFilters, SHOP_DEFAULT_FILTERS } from "@/lib/shop-search-params";
 
 const TYPE_OPTIONS = [
   { value: "", label: "All" },
@@ -29,10 +30,33 @@ const TYPE_OPTIONS = [
   { value: "accessory", label: "Accessories" },
 ];
 
-export function ProductFilters({ filters, onChange, mobileOnly = false }) {
+/**
+ * @param {object} props
+ * @param {Record<string, unknown>} props.filters
+ * @param {(f: Record<string, unknown>) => void} props.onChange
+ * @param {Record<string, unknown>} props.defaults
+ * @param {() => void} [props.onReset]
+ * @param {boolean} [props.mobileOnly]
+ */
+export function ProductFilters({
+  filters,
+  onChange,
+  defaults = SHOP_DEFAULT_FILTERS,
+  onReset,
+  mobileOnly = false,
+}) {
   const [categories, setCategories] = useState([]);
-  /** Bumps when filters reset so preset selects clear internal “Other (empty)” state. */
   const [filterEpoch, setFilterEpoch] = useState(0);
+
+  /** Prefer subcategories only; if the API tree has no children, list top-level categories. */
+  const categoryOptions = useMemo(() => {
+    const subs = categories.flatMap((p) => p.children ?? []);
+    const list = subs.length > 0 ? subs : categories;
+    return [...list].sort(
+      (a, b) =>
+        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name)
+    );
+  }, [categories]);
 
   useEffect(() => {
     async function load() {
@@ -55,39 +79,38 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
 
   function clear() {
     setFilterEpoch((e) => e + 1);
-    onChange({ page: 1, limit: 20, sort: "newest" });
+    onChange({ ...defaults });
+    onReset?.();
   }
 
-  const activeCount = Object.entries(filters).filter(
-    ([k, v]) => v && !["page", "limit", "sort"].includes(k)
-  ).length;
+  const activeCount = countActiveShopFilters(filters);
 
   const content = (
-    <div className="space-y-7">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="font-[family-name:var(--font-dm-sans)] text-sm font-semibold text-foreground">
           Filters
         </h3>
         {activeCount > 0 && (
           <button
             type="button"
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="shrink-0 text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             onClick={clear}
           >
-            Reset
+            Clear
           </button>
         )}
       </div>
 
-      <FilterGroup label="Type">
-        <div className="flex flex-wrap gap-1.5">
+      <FilterSection title="Type">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Product type">
           {TYPE_OPTIONS.map((t) => (
             <button
               key={t.value || "all"}
               type="button"
               onClick={() => set("type", t.value)}
               className={cn(
-                "inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                "inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
                 filters.type === t.value
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-background text-foreground hover:border-foreground/30"
@@ -97,59 +120,52 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
             </button>
           ))}
         </div>
-      </FilterGroup>
+      </FilterSection>
 
-      <FilterGroup label="Category">
-        <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+      <FilterSection title="Category">
+        <div className="max-h-52 space-y-0.5 overflow-y-auto pr-1">
           <CategoryItem
-            label="All categories"
+            label="All"
             active={!filters.category}
             onClick={() => set("category", "")}
           />
-          {categories.map((cat) => (
-            <div key={cat.id}>
-              <CategoryItem
-                label={cat.name}
-                active={filters.category === cat.slug}
-                onClick={() => set("category", cat.slug)}
-              />
-              {cat.children?.map((child) => (
-                <CategoryItem
-                  key={child.id}
-                  label={child.name}
-                  active={filters.category === child.slug}
-                  onClick={() => set("category", child.slug)}
-                  indent
-                />
-              ))}
-            </div>
+          {categoryOptions.map((cat) => (
+            <CategoryItem
+              key={cat.id}
+              label={cat.name}
+              active={filters.category === cat.slug}
+              onClick={() => set("category", cat.slug)}
+            />
           ))}
         </div>
-      </FilterGroup>
+      </FilterSection>
 
-      <FilterGroup label="Brand">
+      <FilterSection title="Brand">
         <PresetFilterSelect
+          ariaLabel="Brand"
           options={BRAND_OPTIONS}
           value={filters.brand || ""}
           onChange={(v) => set("brand", v)}
-          placeholder="Any brand"
-          inputPlaceholder="Type brand"
+          placeholder="Any"
+          inputPlaceholder="Brand name"
           resetKey={filterEpoch}
         />
-      </FilterGroup>
+      </FilterSection>
 
       {filters.type !== "accessory" && (
-        <FilterGroup label="Laptop specs">
-          <div className="space-y-2">
+        <FilterSection title="Laptop specs">
+          <div className="space-y-3">
             <PresetFilterSelect
+              ariaLabel="Processor"
               options={PROCESSOR_OPTIONS}
               value={filters.processor || ""}
               onChange={(v) => set("processor", v)}
               placeholder="Processor"
-              inputPlaceholder="Type processor"
+              inputPlaceholder="CPU"
               resetKey={filterEpoch}
             />
             <PresetFilterSelect
+              ariaLabel="RAM"
               options={RAM_OPTIONS}
               value={filters.ram || ""}
               onChange={(v) => set("ram", v)}
@@ -158,36 +174,71 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
               resetKey={filterEpoch}
             />
             <PresetFilterSelect
+              ariaLabel="Operating system"
               options={OS_OPTIONS}
               value={filters.os || ""}
               onChange={(v) => set("os", v)}
-              placeholder="Operating system"
-              inputPlaceholder="Type OS"
+              placeholder="OS"
+              inputPlaceholder="OS"
               resetKey={filterEpoch}
             />
           </div>
-        </FilterGroup>
+        </FilterSection>
       )}
 
-      <FilterGroup label="Price (₹)">
-        <div className="flex items-center gap-2">
+      <FilterSection title="Featured">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Featured">
+          <button
+            type="button"
+            onClick={() => set("featured", false)}
+            className={cn(
+              "inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
+              !filters.featured
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background text-foreground hover:border-foreground/30"
+            )}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            onClick={() => set("featured", true)}
+            className={cn(
+              "inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
+              filters.featured
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background text-foreground hover:border-foreground/30"
+            )}
+          >
+            Featured
+          </button>
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Price (₹)">
+        <div className="grid grid-cols-2 gap-2">
           <Input
             type="number"
             min={0}
+            step={1}
+            inputMode="numeric"
             placeholder="Min"
-            value={filters.minPrice || ""}
+            aria-label="Minimum price"
+            value={filters.minPrice === "" || filters.minPrice == null ? "" : filters.minPrice}
             onChange={(e) => set("minPrice", e.target.value)}
           />
-          <span className="text-muted-foreground">–</span>
           <Input
             type="number"
             min={0}
+            step={1}
+            inputMode="numeric"
             placeholder="Max"
-            value={filters.maxPrice || ""}
+            aria-label="Maximum price"
+            value={filters.maxPrice === "" || filters.maxPrice == null ? "" : filters.maxPrice}
             onChange={(e) => set("maxPrice", e.target.value)}
           />
         </div>
-      </FilterGroup>
+      </FilterSection>
     </div>
   );
 
@@ -198,11 +249,11 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
           render={
             <Button variant="outline" size="sm" className="lg:hidden">
               <SlidersHorizontal className="h-4 w-4" />
-              Filters {activeCount > 0 && `(${activeCount})`}
+              Filters {activeCount > 0 ? `(${activeCount})` : ""}
             </Button>
           }
         />
-        <SheetContent side="left" className="w-[320px] overflow-y-auto p-5 pt-12">
+        <SheetContent side="left" className="w-[min(100vw-2rem,380px)] overflow-y-auto p-5 pt-12">
           {content}
         </SheetContent>
       </Sheet>
@@ -210,25 +261,25 @@ export function ProductFilters({ filters, onChange, mobileOnly = false }) {
   }
 
   return (
-    <aside className="hidden w-60 shrink-0 lg:block">
-      <div className="sticky top-20">{content}</div>
+    <aside className="hidden w-64 shrink-0 lg:block">
+      <div className="sticky top-20 rounded-xl border border-border bg-card p-4 shadow-sm">
+        {content}
+      </div>
     </aside>
   );
 }
 
-function FilterGroup({ label, children }) {
+function FilterSection({ title, children }) {
   return (
-    <div className="space-y-2.5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
-        {label}
-      </p>
+    <section className="space-y-2 border-b border-border pb-6 last:border-b-0 last:pb-0">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h4>
       {children}
-    </div>
+    </section>
   );
 }
 
-/** Preset list + optional custom text; matches admin catalog values for RAM (exact) and partial OS/processor. */
 function PresetFilterSelect({
+  ariaLabel,
   options,
   value,
   onChange,
@@ -249,8 +300,10 @@ function PresetFilterSelect({
       ? SPEC_SELECT_OTHER
       : SPEC_SELECT_EMPTY;
 
+  const selectId = `shop-preset-${ariaLabel.replace(/\s+/g, "-").toLowerCase()}`;
+
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <Select
         value={selectValue}
         onValueChange={(next) => {
@@ -266,10 +319,10 @@ function PresetFilterSelect({
           }
         }}
       >
-        <SelectTrigger className="h-9">
+        <SelectTrigger id={selectId} className="h-9 w-full min-w-0" aria-label={ariaLabel}>
           <SelectValue placeholder={placeholder}>
             {(val) => {
-              if (val === SPEC_SELECT_EMPTY) return "Any";
+              if (val === SPEC_SELECT_EMPTY) return placeholder;
               if (val === SPEC_SELECT_OTHER) return "Custom…";
               return val != null ? String(val) : "";
             }}
@@ -295,20 +348,20 @@ function PresetFilterSelect({
             if (next === "") setEmptyCustom(true);
           }}
           placeholder={inputPlaceholder}
+          aria-label={ariaLabel}
         />
       )}
     </div>
   );
 }
 
-function CategoryItem({ label, active, onClick, indent }) {
+function CategoryItem({ label, active, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         "block w-full truncate rounded px-2 py-1.5 text-left text-sm transition-colors",
-        indent && "pl-6 text-[13px]",
         active
           ? "bg-foreground text-background font-medium"
           : "text-foreground hover:bg-muted"
